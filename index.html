@@ -7,33 +7,22 @@
         @font-face { font-family: 'Siddur'; src: local('Guttman Stam'), local('David'); }
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #000; color: #fff; font-family: 'Siddur', 'Guttman Stam', serif; }
         body { display: flex; flex-direction: column; cursor: none; }
-        
-        #header { 
-            height: 18vh; background: linear-gradient(135deg, #041d29 0%, #000 50%, #041d29 100%); 
-            display: flex; align-items: center; justify-content: space-between; padding: 0 30px; border-bottom: 2px solid #d4af37; 
-        }
+        #header { height: 18vh; background: linear-gradient(135deg, #041d29 0%, #000 50%, #041d29 100%); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; border-bottom: 2px solid #d4af37; }
         #header h1 { margin: 0; font-size: 3.2vw; background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        
         #parasha-area { flex: 1; text-align: right; }
         #parasha-title { font-size: 2.2vw; color: #f1d279; font-weight: bold; }
-        
         #clock-box { flex: 1; text-align: left; line-height: 1.2; }
         #clock { font-size: 2.5vw; color: #fff; font-weight: bold; font-family: monospace; }
         #today-date { font-size: 1.5vw; color: #f1d279; font-weight: bold; }
-        
         #main-zone { flex: 1; background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 12px; padding: 10px; }
         .card { background: linear-gradient(145deg, rgba(22, 90, 122, 0.4) 0%, rgba(10, 45, 61, 0.6) 100%); border: 1px solid #d4af37; border-radius: 12px; width: 31%; height: 35vh; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 10px; position: relative; box-sizing: border-box; }
         .card.first-year-style { border: 4px double #d4af37; background: rgba(40, 120, 160, 0.3); }
-        
         .name { font-size: 2.1vw; font-weight: bold; color: #fff; margin-top: 15px; width: 85%; line-height: 1.1; }
         .parents { font-size: 1.2vw; color: #cfcfcf; margin-top: 4px; }
         .date { font-size: 1.4vw; color: #f1d279; font-weight: bold; margin-top: 6px; }
-        
         .donor { margin-top: auto; font-size: 0.9vw; color: #d4af37; border-top: 1px solid rgba(212,175,55,0.2); width: 90%; padding-top: 5px; font-style: italic; }
         .year-label { background: #d4af37; color: #000; font-weight: bold; font-size: 0.8vw; padding: 2px 8px; border-radius: 4px; margin-top: 5px; }
-        
         #footer { height: 7vh; background: #052a3b; color: #f1d279; display: flex; align-items: center; justify-content: center; border-top: 2px solid #d4af37; font-size: 3vh; font-weight: bold; }
-        
         .candle-box { position: absolute; top: 8px; left: 8px; width: 25px; height: 45px; }
         .flame-real { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 10px; height: 20px; background: radial-gradient(ellipse at bottom, #fff 0%, #fffb00 30%, #ff6600 70%, rgba(255,102,0,0) 100%); border-radius: 50% 50% 35% 35%; animation: flicker 0.15s infinite alternate; box-shadow: 0 0 15px #ff6600; }
         .wax-real { position: absolute; bottom: 0; left: 50%; width: 14px; height: 18px; background: linear-gradient(to right, #a67c00, #f1d279, #a67c00); transform: translateX(-50%); border-radius: 2px; }
@@ -43,18 +32,15 @@
 <body onclick="document.documentElement.requestFullscreen();">
 
 <div id="header">
-    <div id="parasha-area">
-        <div id="parasha-title">פרשת יתרו</div>
-    </div>
-    <h1>לוח הנצחה - בית כנסת הראל</h1>
+    <div id="parasha-area"><div id="parasha-title">לוח אזכרות והנצחה</div></div>
+    <h1>בית כנסת הראל</h1>
     <div id="clock-box">
         <div id="clock">00:00:00</div>
         <div id="today-date">טוען...</div>
     </div>
 </div>
 
-<div id="main-zone">מתחבר למאגר הנתונים...</div>
-
+<div id="main-zone">התחברות למאגר...</div>
 <div id="footer">תהא נשמתם צרורה בצרור החיים</div>
 
 <script>
@@ -63,21 +49,17 @@
     let currentIndex = 0;
 
     function numberToHebrew(num) {
-        if (!num) return "";
-        let n = parseInt(num);
-        if (isNaN(n)) return num;
-        if (n === 15) return 'ט"ו';
-        if (n === 16) return 'ט"ז';
-        const units = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"];
-        const tens = ["", "י", "כ", "ל"];
-        let heb = n >= 10 ? tens[Math.floor(n / 10)] + units[n % 10] : units[n];
-        return heb.length > 1 ? heb.slice(0, -1) + '"' + heb.slice(-1) : heb + "'";
+        let n = parseInt(num); if (isNaN(n)) return num;
+        if (n === 15) return 'ט"ו'; if (n === 16) return 'ט"ז';
+        const u = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"], t = ["", "י", "כ", "ל"];
+        let h = n >= 10 ? t[Math.floor(n/10)] + u[n%10] : u[n];
+        return h.length > 1 ? h.slice(0,-1) + '"' + h.slice(-1) : h + "'";
     }
 
     function getHebrewDateInfo(dateObj = new Date()) {
-        const d = parseInt(new Intl.DateTimeFormat('he-u-ca-hebrew', {day: 'numeric'}).format(dateObj));
-        const m = new Intl.DateTimeFormat('he-u-ca-hebrew', {month: 'long'}).format(dateObj);
-        const y = new Intl.DateTimeFormat('he-u-ca-hebrew', {year: 'numeric'}).format(dateObj);
+        const d = parseInt(new Intl.DateTimeFormat('he-u-ca-hebrew', {day:'numeric'}).format(dateObj));
+        const m = new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(dateObj);
+        const y = new Intl.DateTimeFormat('he-u-ca-hebrew', {year:'numeric'}).format(dateObj);
         return { d, m, display: `${numberToHebrew(d)} ב${m} ${y}` };
     }
 
@@ -90,6 +72,7 @@
     }
 
     window.processData = function(data) {
+        if (!data || !data.table) return;
         const rows = data.table.rows;
         const infoToday = getHebrewDateInfo();
         let relevantDates = [];
@@ -99,26 +82,12 @@
         }
 
         const parsed = rows.map(r => {
-            const c = r.c;
-            if (!c || !c[0] || !c[0].v) return null;
+            const c = r.c; if (!c || !c[0] || !c[0].v) return null;
             const getT = (cell) => (!cell || cell.v === null) ? "" : (cell.f ? cell.f : cell.v.toString()).trim();
-            
-            // לוגיקה חסינה לחיבור הורים (מנקה רווחים נסתרים)
-            let father = getT(c[2]);
-            let mother = getT(c[3]);
-            let parentsStr = "";
-            
-            if (father && mother) {
-                parentsStr = father + " ו" + mother;
-            } else if (father) {
-                parentsStr = father;
-            } else if (mother) {
-                parentsStr = mother;
-            }
-
+            let f = getT(c[2]), m = getT(c[3]);
+            let pStr = (f && m) ? f + " ו" + m : (f || m);
             return {
-                name: getT(c[0]), prefix: getT(c[1]), 
-                parents: parentsStr,
+                name: getT(c[0]), prefix: getT(c[1]), parents: pStr,
                 dayVal: parseInt(getT(c[4])), dayDisplay: numberToHebrew(getT(c[4])),
                 month: getT(c[5]), year: getT(c[6]), donor: getT(c[7]),
                 isFirstYear: (c[9] && getT(c[9]).includes("שנה"))
@@ -127,14 +96,10 @@
 
         let filtered = parsed.filter(p => p.isFirstYear);
         relevantDates.forEach(date => {
-            const matches = parsed.filter(p => p.dayVal === date.d && p.month === date.m && !filtered.some(y => y.name === p.name));
+            const matches = parsed.filter(p => p.dayVal === date.d && p.month === date.m && !filtered.some(f => f.name === p.name));
             filtered.push(...matches);
         });
-
-        if (filtered.length === 0) {
-            filtered = parsed.filter(p => p.month === infoToday.m).sort((a,b) => a.dayVal - b.dayVal);
-        }
-        
+        if (filtered.length === 0) filtered = parsed.filter(p => p.month === infoToday.m).sort((a,b) => a.dayVal - b.dayVal);
         allDeceased = filtered.length > 0 ? filtered : parsed.slice(0, 6);
         currentIndex = 0;
         render();
@@ -142,8 +107,6 @@
 
     function render() {
         const container = document.getElementById('main-zone');
-        if (allDeceased.length === 0) { container.innerHTML = "<h2>אין נתונים להצגה</h2>"; return; }
-        
         const batch = allDeceased.slice(currentIndex, currentIndex + 6);
         container.innerHTML = batch.map(p => `
             <div class="card ${p.isFirstYear ? 'first-year-style' : ''}">
@@ -155,22 +118,13 @@
                 <div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div>
             </div>
         `).join('');
-        
         currentIndex = (currentIndex + 6 >= allDeceased.length) ? 0 : currentIndex + 6;
     }
 
-    function updateClockDisplay() {
-        document.getElementById('clock').innerText = new Date().toLocaleTimeString('he-IL', { hour12: false });
-    }
-    
     loadData();
-    setInterval(updateClockDisplay, 1000);
+    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('he-IL', {hour12:false}); }, 1000);
     setInterval(render, 15000);
     setInterval(loadData, 600000);
-    setInterval(() => { 
-        const now = new Date();
-        if (now.getHours() === 4 && now.getMinutes() === 0) location.reload(); 
-    }, 60000);
 </script>
 </body>
 </html>

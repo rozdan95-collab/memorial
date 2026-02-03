@@ -82,9 +82,15 @@
             const c = r.c;
             if (!c || !c[0] || !c[0].v) return null;
             const getT = (cell) => (!cell || cell.v === null) ? "" : (cell.f ? cell.f : cell.v.toString());
+            
+            // לוגיקה לחיבור הורים ללא ו' מיותרת
+            let father = getT(c[2]);
+            let mother = getT(c[3]);
+            let parentsStr = (father && mother) ? father + " ו" + mother : (father || mother);
+
             return {
                 name: getT(c[0]), prefix: getT(c[1]), 
-                parents: (getT(c[2]) && getT(c[3])) ? `${getT(c[2])} ו${getT(c[3])}` : (getT(c[2]) || getT(c[3])),
+                parents: parentsStr,
                 dayVal: parseInt(getT(c[4])), dayDisplay: numberToHebrew(getT(c[4])),
                 month: getT(c[5]), year: getT(c[6]), donor: getT(c[7]),
                 isFirstYear: (c[9] && getT(c[9]).includes("שנה"))
@@ -128,4 +134,5 @@
     setInterval(() => { if (new Date().getHours() === 4 && new Date().getMinutes() === 0) location.reload(); }, 60000);
 </script>
 </body>
+</html>
 </html>

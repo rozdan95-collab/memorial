@@ -7,74 +7,70 @@
         @font-face { font-family: 'Siddur'; src: local('Guttman Stam'), local('David'); }
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #000; font-family: 'Siddur', 'Guttman Stam', serif; }
         body { display: flex; flex-direction: column; cursor: none; }
-        #header { height: 18vh; background: linear-gradient(135deg, #041d29 0%, #000 50%, #041d29 100%); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 3px solid #d4af37; }
+        
+        #header { 
+            height: 18vh; background: linear-gradient(135deg, #041d29 0%, #000 50%, #041d29 100%); 
+            display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 3px solid #d4af37; 
+        }
         #header h1 { margin: 0; font-size: 3.5vw; background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        #parasha-area { flex: 1; text-align: right; }
+        #parasha-title { font-size: 2.2vw; color: #f1d279; font-weight: bold; }
+        
+        #clock-box { flex: 1; text-align: left; line-height: 1.2; }
         #clock { font-size: 2.8vw; color: #fff; font-weight: bold; font-family: monospace; }
         #today-date { font-size: 1.6vw; color: #f1d279; font-weight: bold; }
-        #main-zone { flex: 1; background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 20px; padding: 15px; }
         
-        .card { background: #f0f0f0 !important; border: 2px solid #d4af37 !important; border-radius: 15px; width: 31%; height: 36vh; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 15px; position: relative; box-sizing: border-box; box-shadow: 0 15px 35px rgba(0,0,0,0.6); }
-        .name { font-size: 2.4vw; font-weight: bold; margin-top: 20px; width: 92%; line-height: 1.1; background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0px 1.5px 1.5px rgba(0,0,0,0.5)); }
+        #main-zone { 
+            flex: 1; 
+            background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); 
+            display: flex; flex-wrap: wrap; justify-content: center; align-content: center; 
+            gap: 20px; padding: 15px; 
+        }
+        
+        .card { 
+            background: #f0f0f0 !important; 
+            border: 2px solid #d4af37 !important; 
+            border-radius: 15px; 
+            width: 31%; height: 36vh; 
+            display: flex; flex-direction: column; align-items: center; text-align: center; 
+            padding: 15px; position: relative; box-sizing: border-box; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6); 
+        }
+        
+        .card.first-year-style { border: 6px double #d4af37 !important; background: #fff !important; }
+
+        .name { 
+            font-size: 2.4vw; font-weight: bold; margin-top: 20px; width: 92%; line-height: 1.1;
+            background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0px 1.5px 1.5px rgba(0,0,0,0.5)); 
+        }
+        
         .parents { font-size: 1.4vw; color: #333; margin-top: 6px; font-weight: bold; }
         .date { font-size: 1.6vw; color: #8a6d3b; font-weight: bold; margin-top: 8px; }
-        .donor { margin-top: auto; font-size: 1vw; color: #a67c00; border-top: 1px solid rgba(212,175,55,0.3); width: 90%; padding-top: 8px; font-style: italic; }
+        
+        .donor { 
+            margin-top: auto; font-size: 1vw; color: #a67c00; 
+            border-top: 1px solid rgba(212,175,55,0.3); width: 90%; 
+            padding-top: 8px; font-style: italic; 
+        }
+
+        .year-label { background: #d4af37; color: #000; font-weight: bold; font-size: 0.9vw; padding: 2px 10px; border-radius: 4px; margin-top: 6px; }
+        
         #footer { height: 7vh; background: #052a3b; color: #f1d279; display: flex; align-items: center; justify-content: center; border-top: 3px solid #d4af37; font-size: 3.5vh; font-weight: bold; }
         
         .candle-box { position: absolute; top: 10px; left: 10px; width: 30px; height: 50px; }
-        .flame-real { position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); width: 12px; height: 24px; background: radial-gradient(ellipse at bottom, #fff 0%, #fffb00 30%, #ff6600 70%, rgba(255,102,0,0) 100%); border-radius: 50% 50% 35% 35%; animation: flicker 0.1s infinite alternate; box-shadow: 0 0 15px #ff6600; }
-        .wax-real { position: absolute; bottom: 0; left: 50%; width: 16px; height: 20px; background: linear-gradient(to right, #a67c00, #f1d279, #a67c00); transform: translateX(-50%); border-radius: 2px; }
-        @keyframes flicker { 0% { opacity: 0.5; transform: translateX(-52%) scale(0.9); } 100% { opacity: 1; transform: translateX(-48%) scale(1.1); } }
-    </style>
-</head>
-<body>
-<div id="header">
-    <div style="flex:1"></div>
-    <h1>בית כנסת הראל</h1>
-    <div id="clock-box" style="flex:1; text-align:left;">
-        <div id="clock">00:00:00</div>
-        <div id="today-date">טוען...</div>
-    </div>
-</div>
-<div id="main-zone">מתחבר למאגר...</div>
-<div id="footer">תהא נשמתם צרורה בצרור החיים</div>
-
-<script>
-    const SHEET_ID = '1X6Gv67W9e7W1Lq9R0WjS_uB9tP5H3eWl_u3S7k_g1Ew'; // וודא שזה ה-ID הנכון שלך
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
-
-    async function loadData() {
-        try {
-            const res = await fetch(url);
-            const text = await res.text();
-            const json = JSON.parse(text.substr(47).slice(0, -2));
-            const rows = json.table.rows;
-            const data = rows.map(r => {
-                const c = r.c;
-                const getT = (cell) => (!cell || cell.v === null) ? "" : (cell.f ? cell.f : cell.v.toString()).trim();
-                return { name: getT(c[0]), prefix: getT(c[1]), parents: getT(c[2]), day: getT(c[4]), month: getT(c[5]), year: getT(c[6]), donor: getT(c[7]) };
-            }).filter(p => p.name !== "");
-            render(data);
-        } catch (e) {
-            console.error(e);
-            document.getElementById('main-zone').innerHTML = "<h2>שגיאה בחיבור - בדוק הרשאות שיתוף בגוגל שיטס</h2>";
+        .flame-real { 
+            position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); 
+            width: 12px; height: 24px; 
+            background: radial-gradient(ellipse at bottom, #fff 0%, #fffb00 30%, #ff6600 70%, rgba(255,102,0,0) 100%); 
+            border-radius: 50% 50% 35% 35%; 
+            animation: flicker-strong 0.12s infinite alternate;
+            box-shadow: 0 0 15px #ff6600; 
         }
-    }
-
-    function render(deceased) {
-        const container = document.getElementById('main-zone');
-        container.innerHTML = deceased.slice(0, 6).map(p => `
-            <div class="card">
-                <div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div>
-                <div class="name">${p.prefix} ${p.name}</div>
-                <div class="parents">בן/בת ${p.parents}</div>
-                <div class="date">${p.day} ב${p.month} ${p.year}</div>
-                <div class="donor">${p.donor ? `לעילוי נשמת: ${p.donor}` : ''}</div>
-            </div>
-        `).join('');
-    }
-
-    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('he-IL', {hour12:false}); }, 1000);
-    loadData();
-</script>
-</body>
-</html>
+        .wax-real { position: absolute; bottom: 0; left: 50%; width: 16px; height: 20px; background: linear-gradient(to right, #a67c00, #f1d279, #a67c00); transform: translateX(-50%); border-radius: 2px; }
+        
+        @keyframes flicker-strong { 
+            0% { opacity: 0.4; transform: translateX(-52%) scale(0.85); }
+            50% { opacity: 0.8

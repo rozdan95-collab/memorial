@@ -13,33 +13,22 @@
             display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 3px solid #d4af37; 
         }
         #header h1 { margin: 0; font-size: 3.5vw; background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        
-        #parasha-area { flex: 1; text-align: right; }
-        #parasha-title { font-size: 2.2vw; color: #f1d279; font-weight: bold; }
-        
-        #clock-box { flex: 1; text-align: left; line-height: 1.2; }
         #clock { font-size: 2.8vw; color: #fff; font-weight: bold; font-family: monospace; }
         #today-date { font-size: 1.6vw; color: #f1d279; font-weight: bold; }
         
         #main-zone { 
-            flex: 1; 
-            background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); 
+            flex: 1; background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); 
             display: flex; flex-wrap: wrap; justify-content: center; align-content: center; 
             gap: 20px; padding: 15px; 
         }
         
         .card { 
-            background: #f0f0f0 !important; 
-            border: 2px solid #d4af37 !important; 
-            border-radius: 15px; 
-            width: 31%; height: 36vh; 
-            display: flex; flex-direction: column; align-items: center; text-align: center; 
+            background: #f0f0f0 !important; border: 2px solid #d4af37 !important; border-radius: 15px; 
+            width: 31%; height: 36vh; display: flex; flex-direction: column; align-items: center; text-align: center; 
             padding: 15px; position: relative; box-sizing: border-box; 
             box-shadow: 0 15px 35px rgba(0,0,0,0.6); 
         }
         
-        .card.first-year-style { border: 6px double #d4af37 !important; background: #fff !important; }
-
         .name { 
             font-size: 2.4vw; font-weight: bold; margin-top: 20px; width: 92%; line-height: 1.1;
             background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%);
@@ -49,28 +38,58 @@
         
         .parents { font-size: 1.4vw; color: #333; margin-top: 6px; font-weight: bold; }
         .date { font-size: 1.6vw; color: #8a6d3b; font-weight: bold; margin-top: 8px; }
-        
-        .donor { 
-            margin-top: auto; font-size: 1vw; color: #a67c00; 
-            border-top: 1px solid rgba(212,175,55,0.3); width: 90%; 
-            padding-top: 8px; font-style: italic; 
-        }
-
-        .year-label { background: #d4af37; color: #000; font-weight: bold; font-size: 0.9vw; padding: 2px 10px; border-radius: 4px; margin-top: 6px; }
-        
+        .donor { margin-top: auto; font-size: 1vw; color: #a67c00; border-top: 1px solid rgba(212,175,55,0.3); width: 90%; padding-top: 8px; font-style: italic; }
         #footer { height: 7vh; background: #052a3b; color: #f1d279; display: flex; align-items: center; justify-content: center; border-top: 3px solid #d4af37; font-size: 3.5vh; font-weight: bold; }
         
         .candle-box { position: absolute; top: 10px; left: 10px; width: 30px; height: 50px; }
         .flame-real { 
             position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); 
-            width: 12px; height: 24px; 
-            background: radial-gradient(ellipse at bottom, #fff 0%, #fffb00 30%, #ff6600 70%, rgba(255,102,0,0) 100%); 
-            border-radius: 50% 50% 35% 35%; 
-            animation: flicker-strong 0.12s infinite alternate;
-            box-shadow: 0 0 15px #ff6600; 
+            width: 12px; height: 24px; background: radial-gradient(ellipse at bottom, #fff 0%, #fffb00 30%, #ff6600 70%, rgba(255,102,0,0) 100%); 
+            border-radius: 50% 50% 35% 35%; animation: flicker-strong 0.1s infinite alternate; box-shadow: 0 0 15px #ff6600; 
         }
         .wax-real { position: absolute; bottom: 0; left: 50%; width: 16px; height: 20px; background: linear-gradient(to right, #a67c00, #f1d279, #a67c00); transform: translateX(-50%); border-radius: 2px; }
         
         @keyframes flicker-strong { 
             0% { opacity: 0.4; transform: translateX(-52%) scale(0.85); }
-            50% { opacity: 0.8
+            100% { opacity: 1; transform: translateX(-50%) scale(1.15); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="header">
+    <div style="flex:1"></div>
+    <h1>בית כנסת הראל</h1>
+    <div id="clock-box" style="flex:1; text-align:left;">
+        <div id="clock">00:00:00</div>
+        <div id="today-date">טוען...</div>
+    </div>
+</div>
+
+<div id="main-zone">מתחבר למאגר...</div>
+<div id="footer">תהא נשמתם צרורה בצרור החיים</div>
+
+<script>
+    const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
+    // שימוש בכתובת מפורסמת נקייה יותר
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+
+    function numberToHebrew(num) {
+        let n = parseInt(num); if (isNaN(n)) return num;
+        if (n === 15) return 'ט"ו'; if (n === 16) return 'ט"ז';
+        const u = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"], t = ["", "י", "כ", "ל"];
+        let h = n >= 10 ? t[Math.floor(n/10)] + u[n%10] : u[n];
+        return h.length > 1 ? h.slice(0,-1) + '"' + h.slice(-1) : h + "'";
+    }
+
+    function getHebrewDateInfo() {
+        const d = parseInt(new Intl.DateTimeFormat('he-u-ca-hebrew', {day:'numeric'}).format(new Date()));
+        const m = new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(new Date());
+        const y = new Intl.DateTimeFormat('he-u-ca-hebrew', {year:'numeric'}).format(new Date());
+        return { d, m, display: `${numberToHebrew(d)} ב${m} ${y}` };
+    }
+
+    async function loadData() {
+        try {
+            const res = await fetch(
+

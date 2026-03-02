@@ -46,10 +46,7 @@
         
         .parents { font-size: 1.5vw; color: #333; margin-top: 0.5vh; font-weight: bold; }
         .date { font-size: 1.4vw; color: #8a6d3b; font-weight: bold; margin-top: 0.5vh; }
-        
-        /* תיקון הכותרת התחתונה בריבוע */
         .donor { margin-top: auto; font-size: 1vw; color: #a67c00; border-top: 1px solid rgba(0,0,0,0.1); width: 90%; padding-top: 0.5vh; font-style: italic; }
-        
         .year-label { background: #d4af37; color: #000; font-weight: bold; font-size: 0.9vw; padding: 2px 10px; border-radius: 4px; margin-top: 5px; }
         
         #footer { height: 7vh; background: #052a3b; color: #f1d279; display: flex; align-items: center; justify-content: center; border-top: 3px solid #d4af37; font-size: 3.5vh; font-weight: bold; box-sizing: border-box; }
@@ -112,10 +109,19 @@
             allDeceased = rows.map(r => {
                 const c = r.c;
                 const getT = (idx) => (c[idx] && c[idx].v !== null) ? (c[idx].f ? c[idx].f : c[idx].v.toString()).trim() : "";
-                let fName = getT(2), mName = getT(3);
+                let fName = getT(2), mName = getT(3), prefix = getT(1);
+                
+                // לוגיקה מתוקנת להצגת הורים ללא ו' חיבור מיותרת
+                let parentLine = "";
+                if (fName && mName) {
+                    parentLine = `${prefix} ${fName} ו${mName}`;
+                } else if (fName || mName) {
+                    parentLine = `${prefix} ${fName || mName}`;
+                }
+
                 return {
                     name: getT(0), 
-                    parents: (fName || mName) ? `${getT(1)} ${fName} ו${mName}`.replace(/ ו$/, "") : "",
+                    parents: parentLine,
                     dayVal: parseInt(getT(4)), 
                     month: getT(5), 
                     year: getT(6), 
@@ -160,11 +166,9 @@
     function updateHeader() {
         const d = new Date();
         document.getElementById('clock').innerText = d.toLocaleTimeString('he-IL', {hour12:false});
-        
         const dayNum = parseInt(new Intl.DateTimeFormat('he-u-ca-hebrew', {day:'numeric'}).format(d));
         const monthName = new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(d);
         const yearName = new Intl.DateTimeFormat('he-u-ca-hebrew', {year:'numeric'}).format(d);
-        
         document.getElementById('today-date').innerText = `${numberToHebrew(dayNum)} ${monthName} ${yearName}`;
     }
 
@@ -176,6 +180,7 @@
 </script>
 </body>
 </html>
+
 
 
 

@@ -11,46 +11,54 @@
         #header { 
             height: 18vh; background: linear-gradient(135deg, #041d29 0%, #000 50%, #041d29 100%); 
             display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 3px solid #d4af37; 
+            box-sizing: border-box;
         }
         #header h1 { margin: 0; font-size: 3.5vw; background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         #clock { font-size: 2.8vw; color: #fff; font-weight: bold; font-family: monospace; }
         #today-date { font-size: 1.6vw; color: #f1d279; font-weight: bold; }
         
+        /* אזור הריבועים - גובה קבוע ללא גלילה */
         #main-zone { 
-            flex: 1; background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); 
-            display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 20px; padding: 15px; 
+            height: 75vh; 
+            background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); 
+            display: flex; flex-wrap: wrap; justify-content: center; align-content: center; 
+            gap: 1.5vh; padding: 1vh; 
+            box-sizing: border-box;
+            overflow: hidden; /* מונע את הופעת הריבועים למטה */
         }
         
         .card { 
-            background: #f0f0f0 !important; border: 2px solid #d4af37 !important; border-radius: 15px; 
-            width: 31%; height: 36vh; display: flex; flex-direction: column; align-items: center; text-align: center; 
-            padding: 15px; position: relative; box-sizing: border-box; box-shadow: 0 15px 35px rgba(0,0,0,0.6); 
+            background: #f0f0f0 !important; border: 2px solid #d4af37 !important; border-radius: 12px; 
+            width: 31%; 
+            height: 35vh; /* גובה מותאם כך ש-2 שורות יכנסו ב-75vh */
+            display: flex; flex-direction: column; align-items: center; text-align: center; 
+            padding: 1.5vh; position: relative; box-sizing: border-box; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6); 
         }
         
-        /* עיצוב שנת אבל - בולט עם מסגרת כפולה */
         .card.first-year-style { border: 6px double #d4af37 !important; background: #fff !important; }
 
         .name { 
-            font-size: 2.6vw; font-weight: bold; margin-top: 20px; width: 92%; line-height: 1.1;
+            font-size: 2.4vw; font-weight: bold; margin-top: 1vh; width: 92%; line-height: 1.1;
             background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             filter: drop-shadow(0px 1.5px 1.5px rgba(0,0,0,0.5)); 
         }
         
-        .parents { font-size: 1.6vw; color: #333; margin-top: 8px; font-weight: bold; }
-        .date { font-size: 1.5vw; color: #8a6d3b; font-weight: bold; margin-top: 8px; }
-        .donor { margin-top: auto; font-size: 1.1vw; color: #a67c00; border-top: 1px solid rgba(0,0,0,0.1); width: 90%; padding-top: 8px; font-style: italic; }
-        .year-label { background: #d4af37; color: #000; font-weight: bold; font-size: 1vw; padding: 2px 12px; border-radius: 4px; margin-top: 5px; }
+        .parents { font-size: 1.5vw; color: #333; margin-top: 0.5vh; font-weight: bold; }
+        .date { font-size: 1.4vw; color: #8a6d3b; font-weight: bold; margin-top: 0.5vh; }
+        .donor { margin-top: auto; font-size: 1vw; color: #a67c00; border-top: 1px solid rgba(0,0,0,0.1); width: 90%; padding-top: 0.5vh; font-style: italic; }
+        .year-label { background: #d4af37; color: #000; font-weight: bold; font-size: 0.9vw; padding: 2px 10px; border-radius: 4px; margin-top: 5px; }
         
-        #footer { height: 7vh; background: #052a3b; color: #f1d279; display: flex; align-items: center; justify-content: center; border-top: 3px solid #d4af37; font-size: 3.5vh; font-weight: bold; }
+        #footer { height: 7vh; background: #052a3b; color: #f1d279; display: flex; align-items: center; justify-content: center; border-top: 3px solid #d4af37; font-size: 3.5vh; font-weight: bold; box-sizing: border-box; }
         
-        .candle-box { position: absolute; top: 10px; left: 10px; width: 30px; height: 50px; }
-        .flame-real { position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); width: 12px; height: 24px; background: radial-gradient(ellipse at bottom, #fff 0%, #fffb00 30%, #ff6600 70%, rgba(255,102,0,0) 100%); border-radius: 50% 50% 35% 35%; animation: flicker-strong 0.1s infinite alternate; box-shadow: 0 0 15px #ff6600; }
-        .wax-real { position: absolute; bottom: 0; left: 50%; width: 16px; height: 20px; background: linear-gradient(to right, #a67c00, #f1d279, #a67c00); transform: translateX(-50%); border-radius: 2px; }
+        .candle-box { position: absolute; top: 10px; left: 10px; width: 25px; height: 40px; }
+        .flame-real { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); width: 10px; height: 20px; background: radial-gradient(ellipse at bottom, #fff 0%, #fffb00 30%, #ff6600 70%, rgba(255,102,0,0) 100%); border-radius: 50% 50% 35% 35%; animation: flicker-strong 0.1s infinite alternate; }
+        .wax-real { position: absolute; bottom: 0; left: 50%; width: 14px; height: 16px; background: linear-gradient(to right, #a67c00, #f1d279, #a67c00); transform: translateX(-50%); border-radius: 2px; }
         @keyframes flicker-strong { 0% { opacity: 0.4; transform: translateX(-52%) scale(0.85); } 100% { opacity: 1; transform: translateX(-50%) scale(1.15); } }
     </style>
 </head>
-<body>
+<body onclick="document.documentElement.requestFullscreen();">
 
 <div id="header">
     <div style="flex:1"></div>
@@ -61,12 +69,15 @@
     </div>
 </div>
 
-<div id="main-zone">מתחבר למאגר הנתונים...</div>
+<div id="main-zone">טוען נתונים...</div>
 <div id="footer">תהא נשמתם צרורה בצרור החיים</div>
 
 <script>
     const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
     const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+
+    let allDeceased = [];
+    let currentIndex = 0;
 
     function numberToHebrew(num) {
         let n = parseInt(num); if (isNaN(n)) return num;
@@ -76,7 +87,6 @@
         return h.length > 1 ? h.slice(0,-1) + '"' + h.slice(-1) : h + "'";
     }
 
-    // פונקציה שמייצרת רשימה של 11 התאריכים הבאים (היום + 10)
     function getUpcomingDates() {
         let dates = [];
         for (let i = 0; i <= 10; i++) {
@@ -97,7 +107,7 @@
             const rows = json.table.rows;
             const upcoming = getUpcomingDates();
             
-            const allParsed = rows.map(r => {
+            allDeceased = rows.map(r => {
                 const c = r.c;
                 const getT = (idx) => (c[idx] && c[idx].v !== null) ? (c[idx].f ? c[idx].f : c[idx].v.toString()).trim() : "";
                 let fName = getT(2), mName = getT(3);
@@ -110,30 +120,27 @@
                     donor: getT(7),
                     isFirstYear: (c[9] && getT(9).includes("שנה"))
                 };
-            }).filter(p => p.name !== "");
-
-            // סינון: מי שנמצא ב-11 הימים הקרובים או בשנת אבל
-            const filtered = allParsed.filter(p => {
+            }).filter(p => {
+                if (p.name === "") return false;
                 if (p.isFirstYear) return true;
                 return upcoming.some(u => u.day === p.dayVal && u.month === p.month);
             });
 
-            // מיון: קודם מי שחל היום, אחר כך לפי סדר התאריכים
-            filtered.sort((a, b) => a.dayVal - b.dayVal);
-
-            render(filtered);
-        } catch (e) {
-            document.getElementById('main-zone').innerHTML = "<h2>שגיאה בטעינת הנתונים</h2>";
-        }
+            allDeceased.sort((a, b) => a.dayVal - b.dayVal);
+            currentIndex = 0;
+            render();
+        } catch (e) { console.error(e); }
     }
 
-    function render(data) {
+    function render() {
         const container = document.getElementById('main-zone');
-        if (data.length === 0) {
+        if (allDeceased.length === 0) {
             container.innerHTML = "<h2>אין אזכרות לימים הקרובים</h2>";
             return;
         }
-        container.innerHTML = data.map(p => `
+
+        const batch = allDeceased.slice(currentIndex, currentIndex + 6);
+        container.innerHTML = batch.map(p => `
             <div class="card ${p.isFirstYear ? 'first-year-style' : ''}">
                 <div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div>
                 <div class="name">${p.name}</div>
@@ -143,6 +150,10 @@
                 <div class="donor">${p.donor ? `לעילוי נשמת: ${p.donor}` : ''}</div>
             </div>
         `).join('');
+
+        // עדכון האינדקס לסיבוב הבא (קפיצות של 6)
+        currentIndex += 6;
+        if (currentIndex >= allDeceased.length) currentIndex = 0;
     }
 
     setInterval(() => {
@@ -152,10 +163,12 @@
     }, 1000);
     
     loadData();
-    setInterval(loadData, 1800000); // רענון נתונים כל חצי שעה
+    setInterval(render, 13000); // החלפה כל 13 שניות בדיוק
+    setInterval(loadData, 1800000); // רענון מהגוגל שיטס כל חצי שעה
 </script>
 </body>
 </html>
+
 
 
 

@@ -13,13 +13,10 @@
             display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 3px solid #d4af37; 
             box-sizing: border-box;
         }
-        /* עדכון הכותרת המרכזית */
         #header h1 { 
-            margin: 0; 
-            font-size: 3.5vw; 
+            margin: 0; font-size: 3.5vw; 
             background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); 
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent; 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
             white-space: nowrap;
         }
         
@@ -27,21 +24,15 @@
         #today-date { font-size: 1.6vw; color: #f1d279; font-weight: bold; }
         
         #main-zone { 
-            height: 75vh; 
-            background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); 
+            height: 75vh; background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); 
             display: flex; flex-wrap: wrap; justify-content: center; align-content: center; 
-            gap: 1.5vh; padding: 1vh; 
-            box-sizing: border-box;
-            overflow: hidden;
+            gap: 1.5vh; padding: 1vh; box-sizing: border-box; overflow: hidden;
         }
         
         .card { 
             background: #f0f0f0 !important; border: 2px solid #d4af37 !important; border-radius: 12px; 
-            width: 31%; 
-            height: 35vh; 
-            display: flex; flex-direction: column; align-items: center; text-align: center; 
-            padding: 1.5vh; position: relative; box-sizing: border-box; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.6); 
+            width: 31%; height: 35vh; display: flex; flex-direction: column; align-items: center; text-align: center; 
+            padding: 1.5vh; position: relative; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.6); 
         }
         
         .card.first-year-style { border: 6px double #d4af37 !important; background: #fff !important; }
@@ -163,18 +154,27 @@
         if (currentIndex >= allDeceased.length) currentIndex = 0;
     }
 
-    setInterval(() => {
-        document.getElementById('clock').innerText = new Date().toLocaleTimeString('he-IL', {hour12:false});
-        const options = { day: 'numeric', month: 'long', year: 'numeric' };
-        document.getElementById('today-date').innerText = new Intl.DateTimeFormat('he-u-ca-hebrew', options).format(new Date());
-    }, 1000);
-    
+    function updateHeader() {
+        const d = new Date();
+        document.getElementById('clock').innerText = d.toLocaleTimeString('he-IL', {hour12:false});
+        
+        // יצירת התצוגה המבוקשת: י"ג אדר תשפ"ו
+        const dayNum = parseInt(new Intl.DateTimeFormat('he-u-ca-hebrew', {day:'numeric'}).format(d));
+        const monthName = new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(d);
+        const yearName = new Intl.DateTimeFormat('he-u-ca-hebrew', {year:'numeric'}).format(d);
+        
+        document.getElementById('today-date').innerText = `${numberToHebrew(dayNum)} ${monthName} ${yearName}`;
+    }
+
+    setInterval(updateHeader, 1000);
+    updateHeader();
     loadData();
     setInterval(render, 13000); 
     setInterval(loadData, 1800000);
 </script>
 </body>
 </html>
+
 
 
 

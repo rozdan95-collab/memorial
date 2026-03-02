@@ -1,50 +1,107 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html dir="rtl" lang="he">
 <head>
     <meta charset="UTF-8">
     <title>לוח הנצחה - בית כנסת הראל</title>
     <style>
+        /* הגדרות גופן ומבנה כללי */
         @font-face { font-family: 'Siddur'; src: local('Guttman Stam'), local('David'); }
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #000; color: #fff; font-family: 'Siddur', 'Guttman Stam', serif; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #000; font-family: 'Siddur', 'Guttman Stam', serif; }
         body { display: flex; flex-direction: column; cursor: none; }
-        #header { height: 18vh; background: linear-gradient(135deg, #041d29 0%, #000 50%, #041d29 100%); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; border-bottom: 2px solid #d4af37; }
-        #header h1 { margin: 0; font-size: 3.2vw; background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        /* כותרת עליונה - שילוב כחול עמוק וזהב */
+        #header { 
+            height: 18vh; background: linear-gradient(135deg, #041d29 0%, #000 50%, #041d29 100%); 
+            display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 3px solid #d4af37; 
+        }
+        #header h1 { margin: 0; font-size: 3.5vw; background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
         #parasha-area { flex: 1; text-align: right; }
         #parasha-title { font-size: 2.2vw; color: #f1d279; font-weight: bold; }
+        
         #clock-box { flex: 1; text-align: left; line-height: 1.2; }
-        #clock { font-size: 2.5vw; color: #fff; font-weight: bold; font-family: monospace; }
-        #today-date { font-size: 1.5vw; color: #f1d279; font-weight: bold; }
-        #main-zone { flex: 1; background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 12px; padding: 10px; }
-        .card { background: linear-gradient(145deg, rgba(22, 90, 122, 0.4) 0%, rgba(10, 45, 61, 0.6) 100%); border: 1px solid #d4af37; border-radius: 12px; width: 31%; height: 35vh; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 10px; position: relative; box-sizing: border-box; }
-        .card.first-year-style { border: 4px double #d4af37; background: rgba(40, 120, 160, 0.3); }
-        .name { font-size: 2.1vw; font-weight: bold; color: #fff; margin-top: 15px; width: 85%; line-height: 1.1; }
-        .parents { font-size: 1.2vw; color: #cfcfcf; margin-top: 4px; }
-        .date { font-size: 1.4vw; color: #f1d279; font-weight: bold; margin-top: 6px; }
-        .donor { margin-top: auto; font-size: 0.9vw; color: #d4af37; border-top: 1px solid rgba(212,175,55,0.2); width: 90%; padding-top: 5px; font-style: italic; }
-        .year-label { background: #d4af37; color: #000; font-weight: bold; font-size: 0.8vw; padding: 2px 8px; border-radius: 4px; margin-top: 5px; }
-        #footer { height: 7vh; background: #052a3b; color: #f1d279; display: flex; align-items: center; justify-content: center; border-top: 2px solid #d4af37; font-size: 3vh; font-weight: bold; }
-        .candle-box { position: absolute; top: 8px; left: 8px; width: 25px; height: 45px; }
-        .flame-real { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 10px; height: 20px; background: radial-gradient(ellipse at bottom, #fff 0%, #fffb00 30%, #ff6600 70%, rgba(255,102,0,0) 100%); border-radius: 50% 50% 35% 35%; animation: flicker 0.15s infinite alternate; box-shadow: 0 0 15px #ff6600; }
-        .wax-real { position: absolute; bottom: 0; left: 50%; width: 14px; height: 18px; background: linear-gradient(to right, #a67c00, #f1d279, #a67c00); transform: translateX(-50%); border-radius: 2px; }
-        @keyframes flicker { 0% { opacity: 0.8; transform: translateX(-50%) scale(0.9); } 100% { opacity: 1; transform: translateX(-50%) scale(1.1); } }
+        #clock { font-size: 2.8vw; color: #fff; font-weight: bold; font-family: monospace; }
+        #today-date { font-size: 1.6vw; color: #f1d279; font-weight: bold; }
+        
+        /* אזור התצוגה המרכזי */
+        #main-zone { 
+            flex: 1; 
+            background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); 
+            display: flex; flex-wrap: wrap; justify-content: center; align-content: center; 
+            gap: 20px; padding: 15px; 
+        }
+        
+        /* הריבועים הבהירים עם עומק מקצועי */
+        .card { 
+            background: #f0f0f0 !important; 
+            border: 2px solid #d4af37 !important; 
+            border-radius: 15px; 
+            width: 31%; height: 36vh; 
+            display: flex; flex-direction: column; align-items: center; text-align: center; 
+            padding: 15px; position: relative; box-sizing: border-box; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6); /* הצללה חזקה למראה תלת-ממדי */
+        }
+        
+        /* עיצוב מיוחד לשנת אבל */
+        .card.first-year-style { border: 6px double #d4af37 !important; background: #fff !important; }
+
+        /* אותיות הזהב - שילוב גרדיאנט וצללית לקריאות על רקע בהיר */
+        .name { 
+            font-size: 2.4vw; font-weight: bold; margin-top: 20px; width: 92%; line-height: 1.1;
+            background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            /* הצללית הקריטית שמונעת מהזהב להיעלם בלבן */
+            filter: drop-shadow(0px 1.5px 1.5px rgba(0,0,0,0.5)); 
+        }
+        
+        .parents { font-size: 1.4vw; color: #333; margin-top: 6px; font-weight: bold; }
+        .date { font-size: 1.6vw; color: #8a6d3b; font-weight: bold; margin-top: 8px; }
+        
+        .donor { 
+            margin-top: auto; font-size: 1vw; color: #a67c00; 
+            border-top: 1px solid rgba(212,175,55,0.3); width: 90%; 
+            padding-top: 8px; font-style: italic; 
+        }
+
+        .year-label { background: #d4af37; color: #000; font-weight: bold; font-size: 0.9vw; padding: 2px 10px; border-radius: 4px; margin-top: 6px; }
+        
+        #footer { height: 7vh; background: #052a3b; color: #f1d279; display: flex; align-items: center; justify-content: center; border-top: 3px solid #d4af37; font-size: 3.5vh; font-weight: bold; }
+        
+        /* נר נשמה - להבה חיה ותזזיתית */
+        .candle-box { position: absolute; top: 10px; left: 10px; width: 30px; height: 50px; }
+        .flame-real { 
+            position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); 
+            width: 12px; height: 24px; 
+            background: radial-gradient(ellipse at bottom, #fff 0%, #fffb00 30%, #ff6600 70%, rgba(255,102,0,0) 100%); 
+            border-radius: 50% 50% 35% 35%; 
+            animation: flicker-strong 0.12s infinite alternate; /* הבהוב מהיר וחזק */
+            box-shadow: 0 0 15px #ff6600; 
+        }
+        .wax-real { position: absolute; bottom: 0; left: 50%; width: 16px; height: 20px; background: linear-gradient(to right, #a67c00, #f1d279, #a67c00); transform: translateX(-50%); border-radius: 2px; }
+        
+        /* אנימציית הבהוב חזקה ורועדת */
+        @keyframes flicker-strong { 
+            0% { opacity: 0.5; transform: translateX(-52%) scale(0.8); filter: blur(0.5px); }
+            50% { opacity: 0.8; transform: translateX(-48%) scale(1.1); filter: blur(0px); }
+            100% { opacity: 1; transform: translateX(-50%) scale(1.2); }
+        }
     </style>
 </head>
 <body onclick="document.documentElement.requestFullscreen();">
 
 <div id="header">
-    <div id="parasha-area"><div id="parasha-title">לוח אזכרות והנצחה</div></div>
+    <div id="parasha-area"><div id="parasha-title">פרשת השבוע</div></div>
     <h1>בית כנסת הראל</h1>
     <div id="clock-box">
         <div id="clock">00:00:00</div>
-        <div id="today-date">טוען...</div>
+        <div id="today-date">טוען תאריך...</div>
     </div>
 </div>
 
-<div id="main-zone">התחברות למאגר...</div>
+<div id="main-zone">מתחבר למאגר הנתונים...</div>
 <div id="footer">תהא נשמתם צרורה בצרור החיים</div>
 
 <script>
-    const sheetId = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
     let allDeceased = [];
     let currentIndex = 0;
 
@@ -63,68 +120,85 @@
         return { d, m, display: `${numberToHebrew(d)} ב${m} ${y}` };
     }
 
-    function loadData() {
-        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:processData&cb=${Date.now()}`;
-        const script = document.createElement('script');
-        script.src = url;
-        document.body.appendChild(script);
-        document.getElementById('today-date').innerText = getHebrewDateInfo().display;
+    async function loadData() {
+        // כתובת הגוגל שיטס שלכם
+        const url = "https://docs.google.com/spreadsheets/d/1X6Gv67W9e7W1Lq9R0WjS_uB9tP5H3eWl_u3S7k_g1Ew/gviz/tq?tqx=out:json";
+        try {
+            const res = await fetch(url);
+            const text = await res.text();
+            const json = JSON.parse(text.substr(47).slice(0, -2));
+            processData(json);
+        } catch (e) { 
+            console.error("Error", e);
+            document.getElementById('main-zone').innerHTML = "<h2>שגיאה בחיבור למאגר</h2>";
+        }
     }
 
-    window.processData = function(data) {
-        if (!data || !data.table) return;
+    function processData(data) {
         const rows = data.table.rows;
         const infoToday = getHebrewDateInfo();
-        let relevantDates = [];
-        for(let i=0; i<10; i++) {
-            let d = new Date(); d.setDate(d.getDate() + i);
-            relevantDates.push(getHebrewDateInfo(d));
-        }
-
         const parsed = rows.map(r => {
-            const c = r.c; if (!c || !c[0] || !c[0].v) return null;
+            const c = r.c; if (!c || !c[0]) return null;
             const getT = (cell) => (!cell || cell.v === null) ? "" : (cell.f ? cell.f : cell.v.toString()).trim();
             let f = getT(c[2]), m = getT(c[3]);
-            let pStr = (f && m) ? f + " ו" + m : (f || m);
             return {
-                name: getT(c[0]), prefix: getT(c[1]), parents: pStr,
+                name: getT(c[0]), prefix: getT(c[1]), parents: (f && m) ? f + " ו" + m : (f || m),
                 dayVal: parseInt(getT(c[4])), dayDisplay: numberToHebrew(getT(c[4])),
                 month: getT(c[5]), year: getT(c[6]), donor: getT(c[7]),
                 isFirstYear: (c[9] && getT(c[9]).includes("שנה"))
             };
-        }).filter(p => p && p.name !== "שם הנפטר");
+        }).filter(p => p !== null);
 
-        let filtered = parsed.filter(p => p.isFirstYear);
-        relevantDates.forEach(date => {
-            const matches = parsed.filter(p => p.dayVal === date.d && p.month === date.m && !filtered.some(f => f.name === p.name));
-            filtered.push(...matches);
-        });
-        if (filtered.length === 0) filtered = parsed.filter(p => p.month === infoToday.m).sort((a,b) => a.dayVal - b.dayVal);
+        // סינון: קודם כל שנת אבל, ואז אזכרות של היום
+        let filtered = parsed.filter(p => p.isFirstYear || (p.dayVal === infoToday.d && p.month === infoToday.m));
+        
+        // אם אין כלום להיום, מציגים את כל החודש
+        if (filtered.length === 0) {
+            filtered = parsed.filter(p => p.month === infoToday.m).sort((a,b) => a.dayVal - b.dayVal);
+        }
+        
         allDeceased = filtered.length > 0 ? filtered : parsed.slice(0, 6);
         currentIndex = 0;
         render();
-    };
+    }
 
     function render() {
         const container = document.getElementById('main-zone');
+        if (allDeceased.length === 0) return;
+        
         const batch = allDeceased.slice(currentIndex, currentIndex + 6);
         container.innerHTML = batch.map(p => `
             <div class="card ${p.isFirstYear ? 'first-year-style' : ''}">
                 <div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div>
-                <div class="name">${p.name}</div>
-                <div class="parents">${p.prefix} ${p.parents}</div>
+                <div class="name">${p.prefix} ${p.name}</div>
+                <div class="parents">${p.parents ? `בן/בת ${p.parents}` : ''}</div>
                 <div class="date">${p.dayDisplay} ב${p.month} ${p.year}</div>
-                ${p.isFirstYear ? '<div class="year-label">בתוך שנת האבל</div>' : ''}
-                <div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div>
+                ${p.isFirstYear ? '<div class="year-label">שנת אבל</div>' : ''}
+                <div class="donor">${p.donor ? `לעילוי נשמת: ${p.donor}` : ''}</div>
             </div>
         `).join('');
+        
         currentIndex = (currentIndex + 6 >= allDeceased.length) ? 0 : currentIndex + 6;
     }
 
+    function updateHeader() {
+        const info = getHebrewDateInfo();
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString('he-IL', {hour12:false});
+        document.getElementById('today-date').innerText = info.display;
+    }
+
+    // הפעלה ראשונית ועדכונים שוטפים
+    updateHeader();
+    setInterval(updateHeader, 1000);
+    setInterval(render, 15000); // החלפת דף כל 15 שניות
+    setInterval(loadData, 600000); // רענון נתונים כל 10 דקות
     loadData();
-    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('he-IL', {hour12:false}); }, 1000);
-    setInterval(render, 15000);
-    setInterval(loadData, 600000);
+
+    // ריענון דף אוטומטי ב-4 לפנות בוקר
+    setInterval(() => {
+        const now = new Date();
+        if (now.getHours() === 4 && now.getMinutes() === 0) location.reload();
+    }, 60000);
 </script>
 </body>
 </html>

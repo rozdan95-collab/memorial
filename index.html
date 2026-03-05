@@ -34,11 +34,11 @@
     <div style="flex:1; text-align:left;"><div id="clock">00:00:00</div><div id="today-date">טוען...</div></div>
 </div>
 <div id="main-zone">מעבד נתונים...</div>
-<div id="footer">תהא נשמתם צרורה בצרור החיים<div id="ver">V15.0 FINAL</div></div>
+<div id="footer">תהא נשמתם צרורה בצרור החיים<div id="ver">V16.0 GOLDEN STABLE</div></div>
 
 <script>
     const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
-    const HEB_MONTHS = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
+    const MONTHS = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
 
     function getHebValue(str) {
         if (!str) return 0;
@@ -48,13 +48,6 @@
         if (s.startsWith('ה') && s.length > 3) s = s.substring(1);
         let sum = 0; for (let char of s) sum += (m[char] || 0);
         return sum + 5000;
-    }
-
-    function getMonthIdx(name) {
-        if (!name) return 0;
-        const clean = name.replace(/[^א-ת]/g, "").replace("מרחשון", "חשון").replace("סיוון", "סיון").replace("אדרא", "אדר").replace("אדרב", "אדר");
-        const idx = HEB_MONTHS.findIndex(m => clean.includes(m));
-        return idx !== -1 ? idx + 1 : 6;
     }
 
     function getNow() {
@@ -70,20 +63,20 @@
         };
     }
 
-    // ציון זמן אבסולוטי: (שנה * 1000) + (חודש * 40) + יום
-    function getScore(d, m, y) { return (y * 1000) + (m * 40) + d; }
-
-    function isMourning(pDay, pMonth, pYearStr) {
+    // פונקציה חסינה: בודקת רק מספר יום וחודש
+    function isMourningActive(pDay, pMonth, pYearStr) {
         const now = getNow();
         const pYear = getHebValue(pYearStr);
-        const pMIdx = getMonthIdx(pMonth);
-        const nowScore = getScore(now.d, now.m, now.y);
-        const deathScore = getScore(pDay, pMIdx, pYear);
-        // שנת אבל מסתיימת כשציון הזמן של עכשיו גבוה מציון המוות + 1000 (שנה אחת)
-        return nowScore <= (deathScore + 1000);
+        const pMIdx = MONTHS.findIndex(m => pMonth.includes(m.substring(0,3))) + 1;
+        
+        if (now.y > pYear) {
+            if (now.m > pMIdx) return false;
+            if (now.m === pMIdx && now.d > pDay) return false;
+        }
+        return true;
     }
 
-    let items = []; let offset = 0;
+    let items = []; let startIdx = 0;
 
     async function load() {
         try {
@@ -97,31 +90,32 @@
                 return { name: gt(0), prefix: gt(1), fName: gt(2), mName: gt(3), day: parseInt(gt(4)), month: gt(5), year: gt(6), donor: gt(7), shana: gt(9).includes("שנה") };
             }).filter(p => {
                 if (!p.name) return false;
-                if (p.shana && isMourning(p.day, p.month, p.year)) return true;
+                const active = p.shana && isMourningActive(p.day, p.month, p.year);
+                if (active) return true;
+
+                // בדיקת אזכרה (10 ימים)
                 for(let i=0; i<=10; i++) {
                     let d = new Date(); d.setDate(d.getDate() + i);
-                    const fut = getNowByDate(d);
-                    if (p.day === fut.day && getMonthIdx(p.month) === fut.month) return true;
+                    const futParts = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric'}).formatToParts(d);
+                    const fD = parseInt(futParts.find(x => x.type === 'day').value);
+                    const fM = parseInt(futParts.find(x => x.type === 'month').value);
+                    const pMIdx = MONTHS.findIndex(m => p.month.includes(m.substring(0,3))) + 1;
+                    if (p.day === fD && pMIdx === fM) return true;
                 }
                 return false;
             });
-            items.sort((a, b) => a.day - b.day);
-            offset = 0; render();
-            document.getElementById('ver').innerText = `V15.0 | שמות שנמצאו: ${items.length}`;
-        } catch (e) { console.error(e); }
-    }
 
-    function getNowByDate(d) {
-        const p = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric'}).formatToParts(d);
-        return { day: parseInt(p.find(x => x.type === 'day').value), month: parseInt(p.find(x => x.type === 'month').value) };
+            items.sort((a, b) => a.day - b.day);
+            startIdx = 0; render();
+        } catch (e) { console.error(e); }
     }
 
     function render() {
         const zone = document.getElementById('main-zone');
         if (items.length === 0) { zone.innerHTML = "<h2>אין אזכרות קרובות</h2>"; return; }
-        const page = items.slice(offset, offset + 6);
+        const page = items.slice(startIdx, startIdx + 6);
         zone.innerHTML = page.map(p => {
-            const sh = p.shana && isMourning(p.day, p.month, p.year);
+            const sh = p.shana && isMourningActive(p.day, p.month, p.year);
             const parent = (p.fName && p.mName) ? `${p.prefix} ${p.fName} ו${p.mName}` : `${p.prefix} ${p.fName || p.mName}`;
             const toH = (n) => {
                 if (n === 15) return 'ט"ו'; if (n === 16) return 'ט"ז';
@@ -131,7 +125,7 @@
             };
             return `<div class="card ${sh ? 'first-year-style' : ''}"><div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div><div class="name">${p.name}</div><div class="parents">${parent}</div><div class="date">${toH(p.day)} ${p.month} ${p.year}</div>${sh ? '<div class="year-label">שנת אבל</div>' : ''}<div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div></div>`;
         }).join('');
-        if (items.length > 6) offset = (offset + 6) % items.length;
+        if (items.length > 6) startIdx = (startIdx + 6) % items.length;
     }
 
     function clock() {
@@ -151,3 +145,4 @@
 </script>
 </body>
 </html>
+

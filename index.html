@@ -37,14 +37,7 @@
 
 <script>
     const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
-    const HEB_MONTHS = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
-
-    function getMonthIdx(name) {
-        if (!name) return 0;
-        const clean = name.replace(/[^א-ת]/g, "").replace("מרחשון", "חשון").replace("סיוון", "סיון");
-        for (let i=0; i<HEB_MONTHS.length; i++) { if (clean.includes(HEB_MONTHS[i])) return i + 1; }
-        return 0;
-    }
+    const MONTHS_LIST = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
 
     async function loadData() {
         try {
@@ -52,6 +45,7 @@
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
             
+            // קבלת היום והחודש הנוכחי (במספרים) מהמחשב
             const now = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric'}).formatToParts(new Date());
             const dNow = parseInt(now.find(x => x.type === 'day').value);
             const mNow = parseInt(now.find(x => x.type === 'month').value);
@@ -62,10 +56,17 @@
                 return { name: gt(0), prefix: gt(1), fName: gt(2), mName: gt(3), day: parseInt(gt(4)), month: gt(5), year: gt(6), donor: gt(7), shana: gt(9).includes("שנה") };
             }).filter(p => {
                 if (!p.name) return false;
-                if (p.shana) return true; // תמיד להציג אם כתוב "שנה"
+                if (p.shana) return true; // תמיד להציג אם כתוב "שנה" בגיליון
                 
-                const pM = getMonthIdx(p.month);
-                if (pM === mNow && p.day >= dNow && p.day <= dNow + 12) return true;
+                // בדיקת אזכרה: הופכים את החודש בגיליון למספר
+                const cleanM = p.month.replace(/[^א-ת]/g, "").replace("מרחשון","חשון").replace("סיוון","סיון");
+                let pMIdx = 0;
+                for(let i=0; i<MONTHS_LIST.length; i++) { 
+                    if(cleanM.includes(MONTHS_LIST[i])) pMIdx = i+1; 
+                }
+                
+                // אם אנחנו באותו חודש, מציגים את מי שהאזכרה שלו ב-15 הימים הקרובים
+                if (pMIdx === mNow && p.day >= dNow && p.day <= dNow + 15) return true;
                 return false;
             });
 

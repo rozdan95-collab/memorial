@@ -32,52 +32,54 @@
     <h1>בית כנסת הראל - לוח הנצחה</h1>
     <div style="flex:1; text-align:left;"><div id="clock">00:00:00</div><div id="today-date">טוען...</div></div>
 </div>
-<div id="main-zone">מעבד נתונים...</div>
+<div id="main-zone">סנכרון תאריכים...</div>
 <div id="footer">תהא נשמתם צרורה בצרור החיים</div>
 
 <script>
     const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
-    const HEB_MONTHS = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
+    const MONTH_MAP = {"תשרי":1,"חשון":2,"מרחשון":2,"כסלו":3,"טבת":4,"שבט":5,"אדר":6,"ניסן":7,"אייר":8,"סיון":9,"סיוון":9,"תמוז":10,"אב":11,"אלול":12};
 
-    function getMonthIdx(name) {
+    function getMonthNum(name) {
         if (!name) return 0;
-        const clean = name.replace(/[^א-ת]/g, "").replace("מרחשון", "חשון").replace("סיוון", "סיון").replace("אדרא", "אדר").replace("אדרב", "אדר");
-        for (let i=0; i<HEB_MONTHS.length; i++) {
-            if (clean.includes(HEB_MONTHS[i])) return i + 1;
-        }
+        const clean = name.replace(/[^א-ת]/g, "");
+        for (let key in MONTH_MAP) { if (clean.includes(key)) return MONTH_MAP[key]; }
         return 0;
     }
 
-    async function load() {
+    async function updateBoard() {
         try {
             const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&t=${Date.now()}`);
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
             
-            const now = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric'}).formatToParts(new Date());
-            const dNow = parseInt(now.find(x => x.type === 'day').value);
-            const mNow = parseInt(now.find(x => x.type === 'month').value);
+            // יצירת רשימת מפתחות (יום-חודש) ל-14 הימים הבאים
+            const upcomingKeys = [];
+            for(let i=0; i<=14; i++) {
+                let d = new Date(); d.setDate(d.getDate() + i);
+                let parts = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric'}).formatToParts(d);
+                upcomingKeys.push(parts.find(x=>x.type==='day').value + "-" + parts.find(x=>x.type==='month').value);
+            }
 
-            let all = json.table.rows.map(r => {
+            let filtered = json.table.rows.map(r => {
                 const c = r.c;
                 const gt = (i) => (c[i] && c[i].v !== null) ? (c[i].f ? c[i].f : c[i].v.toString()).trim() : "";
                 return { name: gt(0), prefix: gt(1), fName: gt(2), mName: gt(3), day: parseInt(gt(4)), month: gt(5), year: gt(6), donor: gt(7), shana: gt(9).includes("שנה") };
             }).filter(p => {
                 if (!p.name) return false;
-                if (p.shana) return true;
+                if (p.shana) return true; // הצגת שנת אבל (זלמן יופיע אם רשום לו "שנה")
                 
-                const pM = getMonthIdx(p.month);
-                // בדיקת אזכרה (14 ימים קדימה)
-                if (pM === mNow && p.day >= dNow && p.day <= dNow + 14) return true;
+                const pMNum = getMonthNum(p.month);
+                const pKey = p.day + "-" + pMNum;
+                if (upcomingKeys.includes(pKey)) return true; // בדיקת אזכרה מספרית
                 return false;
             });
 
-            all.sort((a, b) => a.day - b.day);
-            render(all);
+            filtered.sort((a, b) => a.day - b.day);
+            draw(filtered);
         } catch (e) { console.error(e); }
     }
 
-    function render(list) {
+    function draw(list) {
         const zone = document.getElementById('main-zone');
         if (list.length === 0) { zone.innerHTML = "<h2>אין אזכרות קרובות</h2>"; return; }
         
@@ -102,13 +104,13 @@
 
     function clock() {
         const d = new Date();
-        const heb = new Intl.DateTimeFormat('he-u-ca-hebrew', {day:'numeric', month:'long', year:'numeric'}).format(d);
+        const hebDate = new Intl.DateTimeFormat('he-u-ca-hebrew', {day:'numeric', month:'long', year:'numeric'}).format(d);
         document.getElementById('clock').innerText = d.toLocaleTimeString('he-IL', {hour12:false});
-        document.getElementById('today-date').innerText = heb;
+        document.getElementById('today-date').innerText = hebDate;
     }
 
-    setInterval(clock, 1000); clock(); load();
-    setInterval(load, 300000);
+    setInterval(clock, 1000); clock(); updateBoard();
+    setInterval(updateBoard, 600000);
 </script>
 </body>
 </html>

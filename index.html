@@ -11,8 +11,8 @@
         #header h1 { margin: 0; font-size: 3.5vw; background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; }
         #clock { font-size: 2.8vw; color: #fff; font-weight: bold; font-family: monospace; }
         #today-date { font-size: 1.6vw; color: #f1d279; font-weight: bold; }
-        #main-zone { height: 75vh; background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 2vw; padding: 20px; box-sizing: border-box; }
-        .card { background: #fefefe !important; border: 2px solid #d4af37 !important; border-radius: 12px; width: 30%; height: 34vh; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 1.5vh; position: relative; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.6); }
+        #main-zone { height: 75vh; background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 3vw; padding: 2vh; box-sizing: border-box; }
+        .card { background: #fefefe !important; border: 2px solid #d4af37 !important; border-radius: 12px; min-width: 28vw; height: 34vh; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 1.5vh; position: relative; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.6); }
         .card.first-year-style { border: 6px double #d4af37 !important; }
         .name { font-size: 2.4vw; font-weight: bold; margin-top: 2vh; width: 92%; line-height: 1.1; background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .parents { font-size: 1.5vw; color: #333; margin-top: 0.5vh; font-weight: bold; }
@@ -38,71 +38,69 @@
     </div>
 </div>
 
-<div id="main-zone">מעבד נתונים...</div>
+<div id="main-zone">טוען נתונים...</div>
 
 <div id="footer">
     תהא נשמתם צרורה בצרור החיים
-    <div id="ver">V7.0 | IRON VERSION</div>
+    <div id="ver">V8.0 FINAL</div>
 </div>
 
 <script>
-    const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIj)m2YGHh8KoVU'.split(')')[0] + 'KFTboIjM2YGHh8KoVU'; // תיקון ID במידה ויש תווים נסתרים
-    const MONTHS = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
+    const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
+    const MONTHS_LIST = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
 
-    // המרה חסינה של שם חודש למספר (מתעלמת מו' כפולה או י')
-    function getMonthIdx(s) {
-        if (!s) return -1;
-        const clean = s.replace(/[^א-ת]/g, "").replace("מרחשון", "חשון").replace("סיוון", "סיון").replace("אדרא", "אדר").replace("אדרב", "אדר");
-        return MONTHS.findIndex(m => clean.includes(m)) + 1;
+    function getCleanMonth(name) {
+        if (!name) return "";
+        return name.replace(/[^א-ת]/g, "").replace("מרחשון", "חשון").replace("סיוון", "סיון").replace("אדרא", "אדר").replace("אדרב", "אדר");
     }
 
-    // המרה חסינה של שנה עברית למספר (תשפ"ה -> 785)
-    function hebYearToNum(s) {
-        if (!s) return 0;
-        const map = {'א':1,'ב':2,'ג':3,'ד':4,'ה':5,'ו':6,'ז':7,'ח':8,'ט':9,'י':10,'כ':20,'ל':30,'מ':40,'נ':50,'ס':60,'ע':70,'פ':80,'צ':90,'ק':100,'ר':200,'ש':300,'ת':400};
-        let clean = s.replace(/[^א-ת]/g, "");
-        if (clean.startsWith('ה') && clean.length > 3) clean = clean.substring(1);
+    function getHebYearValue(str) {
+        if (!str) return 0;
+        const map = {'ת':400,'ש':300,'ר':200,'ק':100,'צ':90,'פ':80,'ע':70,'ס':60,'נ':50,'מ':40,'ל':30,'כ':20,'י':10,'ט':9,'ח':8,'ז':7,'ו':6,'ה':5,'ד':4,'ג':3,'ב':2,'א':1};
+        let clean = str.replace(/[^א-ת]/g, "");
+        if (clean.length > 3 && clean.startsWith('ה')) clean = clean.substring(1);
         let sum = 0;
         for (let char of clean) { sum += (map[char] || 0); }
         return sum;
     }
 
-    // קבלת התאריך הנוכחי בצורה הכי פשוטה
-    function getNow() {
+    function getCurrentHebDate() {
         const d = new Date();
-        const parts = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric', year:'numeric'}).format(d).replace(/[^\d/]/g, "").split('/');
-        // ברוב הדפדפנים זה יום/חודש/שנה
-        const day = parseInt(parts[0]);
-        const month = parseInt(parts[1]);
-        const yearHeb = new Intl.DateTimeFormat('he-u-ca-hebrew', {year:'numeric'}).format(d).split(' ').pop();
-        return { day, month, yearNum: hebYearToNum(yearHeb), mName: new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(d), yHeb: yearHeb };
+        const parts = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric', year:'numeric'}).format(d).split(/[./\s-]/).filter(x => x.length > 0);
+        const yHeb = new Intl.DateTimeFormat('he-u-ca-hebrew', {year:'numeric'}).format(d).split(' ').pop();
+        return { 
+            day: parseInt(parts[0]), 
+            month: parseInt(parts[1]), 
+            yearNum: getHebYearValue(yHeb),
+            mName: new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(d),
+            yName: yHeb
+        };
     }
 
-    function isExpired(pDay, pMonth, pYearStr) {
-        const now = getNow();
-        const pMonthIdx = getMonthIdx(pMonth);
-        const pYearNum = hebYearToNum(pYearStr);
+    function isMourningActive(pDay, pMonth, pYearStr) {
+        const now = getCurrentHebDate();
+        const pYearNum = getHebYearValue(pYearStr);
+        const pMonthIdx = MONTHS_LIST.findIndex(m => getCleanMonth(pMonth).includes(m)) + 1;
 
-        if (pYearNum === 0) return false;
-        // אם השנה הנוכחית (786) גדולה משנת הפטירה (785)
+        if (pYearNum === 0 || now.yearNum < pYearNum) return true;
+        if (now.yearNum === pYearNum) return true;
         if (now.yearNum > pYearNum) {
-            if (now.month > pMonthIdx) return true;
-            if (now.month === pMonthIdx && now.day > pDay) return true;
+            if (now.month < pMonthIdx) return true;
+            if (now.month === pMonthIdx && now.day <= pDay) return true;
         }
         return false;
     }
 
-    let allItems = [];
-    let idx = 0;
+    let allDeceased = [];
+    let startAt = 0;
 
     async function load() {
         try {
-            const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&cache=${Date.now()}`);
+            const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&t=${Date.now()}`);
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
-            const now = getNow();
-
-            allItems = json.table.rows.map(r => {
+            
+            allDeceased = json.table.rows.map(r => {
                 const c = r.c;
                 const gt = (i) => (c[i] && c[i].v !== null) ? (c[i].f ? c[i].f : c[i].v.toString()).trim() : "";
                 return {
@@ -112,73 +110,66 @@
                 };
             }).filter(p => {
                 if (!p.name) return false;
-                const expired = isExpired(p.day, p.month, p.year);
-                
-                // תנאי 1: שנת אבל (רק אם לא פג תוקף)
-                if (p.shana && !expired) return true;
+                const active = isMourningActive(p.day, p.month, p.year);
+                if (p.shana && active) return true;
 
-                // תנאי 2: אזכרה קרובה (10 ימים)
+                // בדיקה ל-10 ימים (חסין כתיב)
                 for(let i=0; i<=10; i++) {
                     let d = new Date(); d.setDate(d.getDate() + i);
                     const fDay = parseInt(new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric'}).format(d));
-                    const fMonthName = new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(d);
-                    if (p.day === fDay && getMonthIdx(p.month) === getMonthIdx(fMonthName)) return true;
+                    const fMonth = new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(d);
+                    if (p.day === fDay && getCleanMonth(p.month) === getCleanMonth(fMonth)) return true;
                 }
                 return false;
             });
 
-            // מנגנון חירום: אם הרשימה ריקה, אל תסנן
-            if (allItems.length === 0) {
-                 console.log("Emergency: Showing all upcoming regardless of year logic");
-            }
-
-            allItems.sort((a, b) => a.day - b.day);
-            idx = 0; render();
-            document.getElementById('ver').innerText = `V7.0 | נמצאו: ${allItems.length}`;
+            allDeceased.sort((a, b) => a.day - b.day);
+            startAt = 0; render();
+            document.getElementById('ver').innerText = `V8.0 | מוצגים: ${allDeceased.length}`;
         } catch (e) { console.error(e); }
     }
 
     function render() {
         const zone = document.getElementById('main-zone');
-        if (allItems.length === 0) { zone.innerHTML = "<h2>אין אזכרות קרובות להצגה</h2>"; return; }
+        if (allDeceased.length === 0) { zone.innerHTML = "<h2>אין אזכרות קרובות</h2>"; return; }
         
-        const page = allItems.slice(idx, idx + 6);
+        const page = allDeceased.slice(startAt, startAt + 6);
         zone.innerHTML = page.map(p => {
-            const shanaActive = p.shana && !isExpired(p.day, p.month, p.year);
+            const sh = p.shana && isMourningActive(p.day, p.month, p.year);
             const parent = (p.fName && p.mName) ? `${p.prefix} ${p.fName} ו${p.mName}` : `${p.prefix} ${p.fName || p.mName}`;
-            const numH = (n) => {
+            const toH = (n) => {
                 if (n === 15) return 'ט"ו'; if (n === 16) return 'ט"ז';
                 const u = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"], t = ["", "י", "כ", "ל"];
                 let h = n >= 10 ? t[Math.floor(n/10)] + u[n%10] : u[n];
                 return h.length > 1 ? h.slice(0,-1) + '"' + h.slice(-1) : h + "'";
             };
             return `
-                <div class="card ${shanaActive ? 'first-year-style' : ''}">
+                <div class="card ${sh ? 'first-year-style' : ''}">
                     <div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div>
                     <div class="name">${p.name}</div>
                     <div class="parents">${parent}</div>
-                    <div class="date">${numH(p.day)} ${p.month} ${p.year}</div>
-                    ${shanaActive ? '<div class="year-label">שנת אבל</div>' : ''}
+                    <div class="date">${toH(p.day)} ${p.month} ${p.year}</div>
+                    ${sh ? '<div class="year-label">שנת אבל</div>' : ''}
                     <div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div>
                 </div>
             `;
         }).join('');
-        if (allItems.length > 6) idx = (idx + 6) % allItems.length;
+        if (allDeceased.length > 6) startAt = (startAt + 6) % allDeceased.length;
     }
 
-    function tick() {
-        const n = getNow();
-        const numH = (num) => {
+    function clock() {
+        const n = getCurrentHebDate();
+        const toH = (num) => {
             if (num === 15) return 'ט"ו'; if (num === 16) return 'ט"ז';
             const u = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"], t = ["", "י", "כ", "ל"];
             let h = num >= 10 ? t[Math.floor(num/10)] + u[num%10] : u[num];
             return h.length > 1 ? h.slice(0,-1) + '"' + h.slice(-1) : h + "'";
         };
         document.getElementById('clock').innerText = new Date().toLocaleTimeString('he-IL', {hour12:false});
-        document.getElementById('today-date').innerText = `${numH(n.day)} ${n.mName} ${n.yHeb}`;
+        document.getElementById('today-date').innerText = `${toH(n.day)} ${n.mName} ${n.yName}`;
     }
 
-    setInterval(tick, 1000); tick(); load();
+    setInterval(clock, 1000); clock(); load();
     setInterval(render, 13000); setInterval(load, 1800000);
 </script>
 </body>

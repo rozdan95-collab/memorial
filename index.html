@@ -39,6 +39,13 @@
     const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
     const HEB_MONTHS = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
 
+    function getMonthIdx(name) {
+        if (!name) return 0;
+        const clean = name.replace(/[^א-ת]/g, "").replace("מרחשון", "חשון").replace("סיוון", "סיון");
+        for (let i=0; i<HEB_MONTHS.length; i++) { if (clean.includes(HEB_MONTHS[i])) return i + 1; }
+        return 0;
+    }
+
     async function loadData() {
         try {
             const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&t=${Date.now()}`);
@@ -49,7 +56,7 @@
             const dNow = parseInt(now.find(x => x.type === 'day').value);
             const mNow = parseInt(now.find(x => x.type === 'month').value);
 
-            let filtered = json.table.rows.map(r => {
+            let all = json.table.rows.map(r => {
                 const c = r.c;
                 const gt = (i) => (c[i] && c[i].v !== null) ? (c[i].f ? c[i].f : c[i].v.toString()).trim() : "";
                 return { name: gt(0), prefix: gt(1), fName: gt(2), mName: gt(3), day: parseInt(gt(4)), month: gt(5), year: gt(6), donor: gt(7), shana: gt(9).includes("שנה") };
@@ -57,23 +64,19 @@
                 if (!p.name) return false;
                 if (p.shana) return true; // תמיד להציג אם כתוב "שנה"
                 
-                // בדיקת אזכרה (חלון של 10 ימים) - המרה חסינה למספר חודש
-                const cleanM = p.month.replace(/[^א-ת]/g, "").replace("מרחשון","חשון").replace("סיוון","סיון");
-                let pMIdx = 0;
-                for(let i=0; i<HEB_MONTHS.length; i++) { if(cleanM.includes(HEB_MONTHS[i])) pMIdx = i+1; }
-                
-                if (pMIdx === mNow && p.day >= dNow && p.day <= dNow + 10) return true;
+                const pM = getMonthIdx(p.month);
+                if (pM === mNow && p.day >= dNow && p.day <= dNow + 12) return true;
                 return false;
             });
 
-            filtered.sort((a, b) => a.day - b.day);
-            render(filtered);
+            all.sort((a, b) => a.day - b.day);
+            render(all);
         } catch (e) { console.error(e); }
     }
 
     function render(list) {
         const zone = document.getElementById('main-zone');
-        if (list.length === 0) { zone.innerHTML = "<h2>אין נתונים להצגה</h2>"; return; }
+        if (list.length === 0) { zone.innerHTML = "<h2>אין אזכרות קרובות</h2>"; return; }
         
         const toH = (n) => {
             if (n === 15) return 'ט"ו'; if (n === 16) return 'ט"ז';
@@ -106,5 +109,3 @@
 </script>
 </body>
 </html>
-
-

@@ -32,7 +32,7 @@
     <h1>בית כנסת הראל - לוח הנצחה</h1>
     <div style="flex:1; text-align:left;"><div id="clock">00:00:00</div><div id="today-date">טוען...</div></div>
 </div>
-<div id="main-zone">טוען נתונים...</div>
+<div id="main-zone">מעבד נתונים...</div>
 <div id="footer">תהא נשמתם צרורה בצרור החיים</div>
 
 <script>
@@ -44,7 +44,7 @@
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
             
-            // קבלת היום הנוכחי בלבד (ט"ז = 16)
+            // קבלת היום הנוכחי בלבד (16)
             const dNow = parseInt(new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric'}).format(new Date()));
 
             let all = json.table.rows.map(r => {
@@ -53,11 +53,11 @@
                 return { name: gt(0), prefix: gt(1), fName: gt(2), mName: gt(3), day: parseInt(gt(4)), month: gt(5), year: gt(6), donor: gt(7), shana: gt(9).includes("שנה") };
             }).filter(p => {
                 if (!p.name) return false;
-                if (p.shana) return true; // שמות של שנת אבל
+                if (p.shana) return true; // שנת אבל - תמיד להציג
                 
-                // בדיקת אזכרה: אם כתוב "אדר" והיום הוא בין 16 ל-26
-                const isAdar = p.month.includes("אדר");
-                if (isAdar && p.day >= dNow && p.day <= dNow + 10) return true;
+                // בדיקת אזכרה: אם חודש מכיל "אד" (אדר) והיום בין 16 ל-28
+                const isAdar = p.month.includes("אד");
+                if (isAdar && p.day >= dNow && p.day <= dNow + 12) return true;
                 return false;
             });
 
@@ -101,4 +101,5 @@
 </script>
 </body>
 </html>
+
 

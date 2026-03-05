@@ -12,7 +12,7 @@
         #clock { font-size: 2.8vw; color: #fff; font-weight: bold; font-family: monospace; }
         #today-date { font-size: 1.6vw; color: #f1d279; font-weight: bold; }
         #main-zone { height: 75vh; background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 3vw; padding: 2vh; box-sizing: border-box; }
-        .card { background: #fefefe !important; border: 2px solid #d4af37 !important; border-radius: 12px; width: 28vw; height: 33vh; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 1.5vh; position: relative; box-sizing: border-box; shadow: 0 10px 25px rgba(0,0,0,0.6); }
+        .card { background: #fefefe !important; border: 2px solid #d4af37 !important; border-radius: 12px; width: 28vw; height: 33vh; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 1.5vh; position: relative; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.6); }
         .card.first-year-style { border: 6px double #d4af37 !important; background: #fff !important; }
         .name { font-size: 2.4vw; font-weight: bold; margin-top: 1.5vh; width: 92%; line-height: 1.1; background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .parents { font-size: 1.5vw; color: #333; margin-top: 0.5vh; font-weight: bold; }
@@ -33,18 +33,23 @@
     <h1>בית כנסת הראל - לוח הנצחה</h1>
     <div style="flex:1; text-align:left;"><div id="clock">00:00:00</div><div id="today-date">טוען...</div></div>
 </div>
-<div id="main-zone">סריקה מספרית...</div>
-<div id="footer">תהא נשמתם צרורה בצרור החיים<div id="ver">V18.0 DECISIVE</div></div>
+<div id="main-zone">מעבד נתונים...</div>
+<div id="footer">תהא נשמתם צרורה בצרור החיים<div id="ver">V19.0 THE STABLE</div></div>
 
 <script>
     const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
-    const MONTHS = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
+    const HEB_MONTHS = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
 
-    function getMonthNum(name) {
+    function getMonthIdx(name) {
         if (!name) return 0;
         const clean = name.replace(/[^א-ת]/g, "").replace("מרחשון", "חשון").replace("סיוון", "סיון").replace("אדרא", "אדר").replace("אדרב", "אדר");
-        const idx = MONTHS.findIndex(m => clean.includes(m));
-        return idx !== -1 ? idx + 1 : 6;
+        if (clean.includes("תשרי")) return 1; if (clean.includes("חשון")) return 2;
+        if (clean.includes("כסלו")) return 3; if (clean.includes("טבת")) return 4;
+        if (clean.includes("שבט")) return 5; if (clean.includes("אדר")) return 6;
+        if (clean.includes("ניסן")) return 7; if (clean.includes("אייר")) return 8;
+        if (clean.includes("סיון")) return 9; if (clean.includes("תמוז")) return 10;
+        if (clean.includes("אב")) return 11; if (clean.includes("אלול")) return 12;
+        return 0;
     }
 
     function getYearNum(s) {
@@ -57,15 +62,16 @@
         return sum + 5000;
     }
 
-    function getHebDateParts(date) {
-        const parts = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric', year:'numeric'}).formatToParts(date);
-        const yHeb = new Intl.DateTimeFormat('he-u-ca-hebrew', {year:'numeric'}).format(date).split(' ').pop();
+    function getNow() {
+        const d = new Date();
+        const p = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric', year:'numeric'}).formatToParts(d);
+        const yHeb = new Intl.DateTimeFormat('he-u-ca-hebrew', {year:'numeric'}).format(d).split(' ').pop();
         return { 
-            d: parseInt(parts.find(x => x.type === 'day').value), 
-            m: parseInt(parts.find(x => x.type === 'month').value), 
+            d: parseInt(p.find(x => x.type === 'day').value), 
+            m: parseInt(p.find(x => x.type === 'month').value), 
             y: getYearNum(yHeb),
             yHeb: yHeb,
-            mName: new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(date)
+            mName: new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(d)
         };
     }
 
@@ -76,14 +82,14 @@
             const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&t=${Date.now()}`);
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
-            const now = getHebDateParts(new Date());
+            const now = getNow();
 
-            // יצירת רשימת תאריכים ל-12 הימים הקרובים (פורמט: "יום-חודש")
+            // יצירת רשימת תאריכים ל-14 הימים הקרובים
             const upcoming = [];
-            for(let i=0; i<=12; i++) {
+            for(let i=0; i<=14; i++) {
                 let d = new Date(); d.setDate(d.getDate() + i);
-                let h = getHebDateParts(d);
-                upcoming.push(`${h.d}-${h.m}`);
+                let p = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric'}).formatToParts(d);
+                upcoming.push(`${parseInt(p.find(x => x.type === 'day').value)}-${parseInt(p.find(x => x.type === 'month').value)}`);
             }
 
             allItems = json.table.rows.map(r => {
@@ -92,41 +98,40 @@
                 return { name: gt(0), prefix: gt(1), fName: gt(2), mName: gt(3), day: parseInt(gt(4)), month: gt(5), year: gt(6), donor: gt(7), shana: gt(9).includes("שנה") };
             }).filter(p => {
                 if (!p.name) return false;
-                const pMonthIdx = getMonthNum(p.month);
-                const pYearNum = getYearNum(p.year);
+                const pM = getMonthNum(p.month);
+                const pY = getYearNum(p.year);
 
-                // 1. בדיקת פקיעת שנת אבל (זלמן)
-                let shanaActive = p.shana;
-                if (p.shana && pYearNum > 0 && now.y > pYearNum) {
-                    if (now.m > pMonthIdx) shanaActive = false;
-                    if (now.m === pMonthIdx && now.d > p.day) shanaActive = false;
+                // 1. בדיקת שנת אבל (זלמן יוסר כאן)
+                let active = p.shana;
+                if (p.shana && pY > 0 && now.y > pY) {
+                    if (now.m > pM) active = false;
+                    if (now.m === pM && now.d >= p.day) active = false;
                 }
-                if (shanaActive) return true;
+                if (active) return true;
 
-                // 2. בדיקת אזכרה קרובה (השוואת מספרים טהורה)
-                const rowKey = `${p.day}-${pMonthIdx}`;
-                if (upcoming.includes(rowKey)) return true;
+                // 2. בדיקת אזכרה קרובה
+                if (upcoming.includes(`${p.day}-${pM}`)) return true;
 
                 return false;
             });
 
             allItems.sort((a, b) => a.day - b.day);
             startAt = 0; render();
-            document.getElementById('ver').innerText = `V18.0 | נמצאו: ${allItems.length}`;
+            document.getElementById('ver').innerText = `V19.0 | נמצאו: ${allItems.length}`;
         } catch (e) { console.error(e); }
     }
 
     function render() {
         const zone = document.getElementById('main-zone');
-        if (allItems.length === 0) { zone.innerHTML = "<h2>אין אזכרות קרובות להצגה</h2>"; return; }
+        if (allItems.length === 0) { zone.innerHTML = "<h2>אין אזכרות קרובות</h2>"; return; }
         const p = allItems.slice(startAt, startAt + 6);
         zone.innerHTML = p.map(p => {
-            const now = getHebDateParts(new Date());
-            const pMonthIdx = getMonthIdx(p.month);
-            const pYearNum = getYearNum(p.year);
+            const now = getNow();
+            const pM = getMonthNum(p.month);
+            const pY = getYearNum(p.year);
             let shActive = p.shana;
-            if (p.shana && pYearNum > 0 && now.y > pYearNum) {
-                if (now.m > pMonthIdx || (now.m === pMonthIdx && now.d > p.day)) shActive = false;
+            if (p.shana && pY > 0 && now.y > pY) {
+                if (now.m > pM || (now.m === pM && now.d >= p.day)) shActive = false;
             }
             const parent = (p.fName && p.mName) ? `${p.prefix} ${p.fName} ו${p.mName}` : `${p.prefix} ${p.fName || p.mName}`;
             const toH = (n) => {
@@ -137,11 +142,11 @@
             };
             return `<div class="card ${shActive ? 'first-year-style' : ''}"><div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div><div class="name">${p.name}</div><div class="parents">${parent}</div><div class="date">${toH(p.day)} ${p.month} ${p.year}</div>${shActive ? '<div class="year-label">שנת אבל</div>' : ''}<div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div></div>`;
         }).join('');
-        if (allItems.length > 6) startAt = (startIdx + 6) % allItems.length;
+        if (allItems.length > 6) startAt = (startAt + 6) % allItems.length;
     }
 
-    function tick() {
-        const n = getHebDateParts(new Date());
+    function clock() {
+        const n = getNow();
         const toH = (num) => {
             if (num === 15) return 'ט"ו'; if (num === 16) return 'ט"ז';
             const u = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"], t = ["", "י", "כ", "ל"];
@@ -152,7 +157,7 @@
         document.getElementById('today-date').innerText = `${toH(n.d)} ${n.mName} ${n.yHeb}`;
     }
 
-    setInterval(tick, 1000); tick(); update();
+    setInterval(clock, 1000); clock(); update();
     setInterval(render, 13000); setInterval(update, 1800000);
 </script>
 </body>

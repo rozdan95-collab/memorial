@@ -1,4 +1,3 @@
-HTML
 <!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head>
@@ -43,51 +42,48 @@ HTML
 
 <div id="footer">
     תהא נשמתם צרורה בצרור החיים
-    <div id="debug-bar">V2.6 | בדיקה פעילה</div>
+    <div id="debug-bar">V2.7 | תיקון אלגוריתם תאריכים</div>
 </div>
 
 <script>
     const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
     const months = ["תשרי","חשון","כסלו","טבת","שבט","אדר","ניסן","אייר","סיון","תמוז","אב","אלול"];
 
-    // המרת שנה עברית למספר (תוקן: מתעלם מה-ה' ב"התשפ"ה")
     function hebYearToNum(str) {
         if (!str) return 0;
         let year = 5000;
         const values = {'ת':400,'ש':300,'ר':200,'ק':100,'צ':90,'פ':80,'ע':70,'ס':60,'נ':50,'מ':40,'ל':30,'כ':20,'י':10,'ט':9,'ח':8,'ז':7,'ו':6,'ה':5,'ד':4,'ג':3,'ב':2,'א':1};
         let clean = str.replace(/[^א-ת]/g, "");
-        if (clean.startsWith('ה') && clean.length > 3) clean = clean.substring(1); 
+        // הסרת ה' הידיעה אם היא קיימת בתחילת השנה (התשפ"ה -> תשפ"ה)
+        if (clean.length > 3 && clean.startsWith('ה')) clean = clean.substring(1);
         for (let char of clean) { if (values[char]) year += values[char]; }
         return year;
     }
 
-    function getHebNow() {
-        const d = new Date();
-        const parts = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric', year:'numeric'}).formatToParts(d);
+    function getHebDate(dateObj) {
+        const parts = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric', year:'numeric'}).formatToParts(dateObj);
         const day = parseInt(parts.find(p => p.type === 'day').value);
         const month = parseInt(parts.find(p => p.type === 'month').value);
-        const yearNum = parseInt(parts.find(p => p.type === 'year').value);
-        const mName = new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(d);
-        const yHeb = new Intl.DateTimeFormat('he-u-ca-hebrew', {year:'numeric'}).format(d).split(' ').pop();
-        return { day, month, yearNum, yHeb, mName };
+        const year = parseInt(parts.find(p => p.type === 'year').value);
+        const mName = new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(dateObj);
+        const yHeb = new Intl.DateTimeFormat('he-u-ca-hebrew', {year:'numeric'}).format(dateObj).split(' ').pop();
+        return { day, month, year, yHeb, mName };
     }
 
     function isExpired(pDay, pMonth, pYearStr) {
-        const now = getHebHebNow();
+        const now = getHebDate(new Date());
         const pYearNum = hebYearToNum(pYearStr);
         const cleanM = pMonth.replace(/[^א-ת]/g, "").replace("מרחשון","חשון").replace("אדרא","אדר").replace("אדרב","אדר");
         const pMonthNum = months.findIndex(m => cleanM.includes(m)) + 1;
 
-        if (pYearNum === 0 || now.yearNum < pYearNum) return false;
-        if (now.yearNum > pYearNum) {
+        if (pYearNum === 0) return false;
+        // לוגיקה מתמטית: האם תאריך היעד כבר עבר?
+        if (now.year > pYearNum) {
             if (now.month > pMonthNum) return true;
             if (now.month === pMonthNum && now.day > pDay) return true;
         }
         return false;
     }
-
-    // פונקציית עזר למניעת שגיאות בשם
-    function getHebHebNow() { return getHebNow(); }
 
     let allData = [];
     let startIdx = 0;
@@ -97,8 +93,7 @@ HTML
             const response = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&cache=${Date.now()}`);
             const text = await response.text();
             const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
-            const now = getHebNow();
-
+            
             allData = json.table.rows.map(r => {
                 const c = r.c;
                 const getT = (i) => (c[i] && c[i].v !== null) ? (c[i].f ? c[i].f : c[i].v.toString()).trim() : "";
@@ -110,12 +105,14 @@ HTML
             }).filter(p => {
                 if (!p.name) return false;
                 const expired = isExpired(p.day, p.month, p.year);
+                
+                // 1. נפטרי שנה שטרם עברה שנתם
                 if (p.isShana && !expired) return true;
                 
-                // בדיקת אזכרה (10 ימים)
+                // 2. כל מי שיש לו אזכרה ב-10 הימים הקרובים
                 for(let i=0; i<=10; i++) {
                     let d = new Date(); d.setDate(d.getDate() + i);
-                    let h = getHebNow();
+                    let h = getHebDate(d);
                     const cleanPM = p.month.replace(/[^א-ת]/g, "").replace("אדרא","אדר").replace("אדרב","אדר");
                     const pMNum = months.findIndex(m => cleanPM.includes(m)) + 1;
                     if (p.day === h.day && pMNum === h.month) return true;
@@ -126,7 +123,8 @@ HTML
             allData.sort((a, b) => a.day - b.day);
             startIdx = 0;
             render();
-            document.getElementById('debug-bar').innerText = `V2.6 | מעודכן: ${new Date().toLocaleTimeString()} | שמות: ${allData.length}`;
+            const now = getHebDate(new Date());
+            document.getElementById('debug-bar').innerText = `V2.7 | היום: ${now.day}/${now.month}/${now.year} | מוצגים: ${allData.length}`;
         } catch (e) { console.error(e); }
     }
 
@@ -162,7 +160,7 @@ HTML
     }
 
     function updateClock() {
-        const n = getHebNow();
+        const n = getHebDate(new Date());
         const numToH = (num) => {
             if (num === 15) return 'ט"ו'; if (num === 16) return 'ט"ז';
             const u = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"], t = ["", "י", "כ", "ל"];
@@ -178,3 +176,4 @@ HTML
 </script>
 </body>
 </html>
+

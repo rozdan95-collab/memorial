@@ -37,67 +37,70 @@
 
 <script>
     const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
-    const MONTHS = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
+    const HEB_MONTHS = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
 
-    function getM(n) {
-        if (!n) return 0;
-        const c = n.replace(/[^א-ת]/g, "").replace("מרחשון","חשון").replace("סיוון","סיון");
-        for (let i=0; i<MONTHS.length; i++) { if (c.includes(MONTHS[i])) return i + 1; }
-        return 0;
-    }
-
-    async function load() {
+    async function loadData() {
         try {
             const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&t=${Date.now()}`);
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
             
-            const now = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric'}).formatToParts(new Date());
-            const dNow = parseInt(now.find(x => x.type === 'day').value);
-            const mNow = parseInt(now.find(x => x.type === 'month').value);
+            const nowParts = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric'}).formatToParts(new Date());
+            const dNow = parseInt(nowParts.find(x => x.type === 'day').value);
+            const mNow = parseInt(nowParts.find(x => x.type === 'month').value);
 
-            let all = json.table.rows.map(r => {
+            let filtered = json.table.rows.map(r => {
                 const c = r.c;
                 const gt = (i) => (c[i] && c[i].v !== null) ? (c[i].f ? c[i].f : c[i].v.toString()).trim() : "";
                 return { name: gt(0), prefix: gt(1), fName: gt(2), mName: gt(3), day: parseInt(gt(4)), month: gt(5), year: gt(6), donor: gt(7), shana: gt(9).includes("שנה") };
             }).filter(p => {
                 if (!p.name) return false;
-                if (p.shana) return true; // תמיד להציג אם כתוב "שנה"
+                // 1. תמיד להציג אם כתוב "שנה"
+                if (p.shana) return true; 
                 
-                // בדיקת אזכרה ל-10 ימים
-                const pM = getM(p.month);
-                if (pM === mNow && p.day >= dNow && p.day <= dNow + 10) return true;
+                // 2. בדיקת אזכרה לפי חודש ויום (חלון של 10 ימים)
+                const pMIdx = HEB_MONTHS.findIndex(m => p.month.replace(/[^א-ת]/g, "").includes(m)) + 1;
+                if (pMIdx === mNow && p.day >= dNow && p.day <= dNow + 10) return true;
                 return false;
             });
 
-            all.sort((a, b) => a.day - b.day);
-            render(all);
+            filtered.sort((a, b) => a.day - b.day);
+            render(filtered);
         } catch (e) { console.error(e); }
     }
 
     function render(list) {
-        const z = document.getElementById('main-zone');
-        if (list.length === 0) { z.innerHTML = "<h2>אין אזכרות קרובות</h2>"; return; }
-        z.innerHTML = list.slice(0, 6).map(p => {
-            const toH = (n) => {
-                if (n === 15) return 'ט"ו'; if (n === 16) return 'ט"ז';
-                const u = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"], t = ["", "י", "כ", "ל"];
-                let h = n >= 10 ? t[Math.floor(n/10)] + u[n%10] : u[n];
-                return h.length > 1 ? h.slice(0,-1) + '"' + h.slice(-1) : h + "'";
-            };
-            return `<div class="card ${p.shana ? 'first-year-style' : ''}"><div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div><div class="name">${p.name}</div><div class="parents">${p.prefix} ${p.fName} ${p.mName ? 'ו'+p.mName : ''}</div><div class="date">${toH(p.day)} ${p.month} ${p.year}</div>${p.shana ? '<div class="year-label">שנת אבל</div>' : ''}<div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div></div>`;
-        }).join('');
+        const zone = document.getElementById('main-zone');
+        if (list.length === 0) { zone.innerHTML = "<h2>אין אזכרות קרובות</h2>"; return; }
+        
+        const toH = (n) => {
+            if (n === 15) return 'ט"ו'; if (n === 16) return 'ט"ז';
+            const u = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"], t = ["", "י", "כ", "ל"];
+            let h = n >= 10 ? t[Math.floor(n/10)] + u[n%10] : u[n];
+            return h.length > 1 ? h.slice(0,-1) + '"' + h.slice(-1) : h + "'";
+        };
+
+        zone.innerHTML = list.slice(0, 6).map(p => `
+            <div class="card ${p.shana ? 'first-year-style' : ''}">
+                <div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div>
+                <div class="name">${p.name}</div>
+                <div class="parents">${p.prefix} ${p.fName} ${p.mName ? 'ו'+p.mName : ''}</div>
+                <div class="date">${toH(p.day)} ${p.month} ${p.year}</div>
+                ${p.shana ? '<div class="year-label">שנת אבל</div>' : ''}
+                <div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div>
+            </div>
+        `).join('');
     }
 
     function clock() {
         const d = new Date();
-        const parts = new Intl.DateTimeFormat('he-u-ca-hebrew', {day:'numeric', month:'long', year:'numeric'}).format(d);
+        const hebDate = new Intl.DateTimeFormat('he-u-ca-hebrew', {day:'numeric', month:'long', year:'numeric'}).format(d);
         document.getElementById('clock').innerText = d.toLocaleTimeString('he-IL', {hour12:false});
-        document.getElementById('today-date').innerText = parts;
+        document.getElementById('today-date').innerText = hebDate;
     }
 
-    setInterval(clock, 1000); clock(); load();
-    setInterval(load, 600000);
+    setInterval(clock, 1000); clock(); loadData();
+    setInterval(loadData, 600000);
 </script>
 </body>
 </html>

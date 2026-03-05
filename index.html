@@ -20,7 +20,7 @@
         .donor { margin-top: auto; margin-bottom: 0.5vh; font-size: 1vw; color: #a67c00; border-top: 1px solid rgba(0,0,0,0.1); width: 90%; padding-top: 0.5vh; }
         .year-label { background: #d4af37; color: #000; font-weight: bold; font-size: 0.9vw; padding: 2px 10px; border-radius: 4px; margin-top: 5px; }
         #footer { height: 7vh; background: #052a3b; color: #f1d279; display: flex; align-items: center; justify-content: center; border-top: 3px solid #d4af37; font-size: 3.5vh; font-weight: bold; position: relative; }
-        #status { position: absolute; left: 10px; bottom: 5px; font-size: 11px; color: rgba(241, 210, 121, 0.5); font-family: sans-serif; }
+        #version { position: absolute; left: 10px; bottom: 5px; font-size: 11px; color: rgba(241, 210, 121, 0.4); font-family: sans-serif; }
         .candle-box { position: absolute; top: 10px; left: 10px; width: 25px; height: 40px; }
         .flame-real { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); width: 10px; height: 20px; background: radial-gradient(ellipse at bottom, #fff 0%, #fffb00 30%, #ff6600 70%, rgba(255,102,0,0) 100%); border-radius: 50% 50% 35% 35%; animation: flicker 0.1s infinite alternate; }
         .wax-real { position: absolute; bottom: 0; left: 50%; width: 14px; height: 16px; background: linear-gradient(to right, #a67c00, #f1d279, #a67c00); transform: translateX(-50%); border-radius: 2px; }
@@ -38,18 +38,18 @@
     </div>
 </div>
 
-<div id="main-zone">סריקת נתונים...</div>
+<div id="main-zone">מעבד נתונים...</div>
 
 <div id="footer">
     תהא נשמתם צרורה בצרור החיים
-    <div id="status">V3.0 | חישוב אבסולוטי</div>
+    <div id="version">V3.1 | MASTER RESET</div>
 </div>
 
 <script>
     const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
-    const MONTH_LIST = ["תשרי","חשון","כסלו","טבת","שבט","אדר","ניסן","אייר","סיון","תמוז","אב","אלול"];
+    const HEB_MONTHS = ["תשרי","חשון","כסלו","טבת","שבט","אדר","ניסן","אייר","סיון","תמוז","אב","אלול"];
 
-    function hebToNum(str) {
+    function getHebValue(str) {
         if (!str) return 0;
         let val = 0;
         const map = {'ת':400,'ש':300,'ר':200,'ק':100,'צ':90,'פ':80,'ע':70,'ס':60,'נ':50,'מ':40,'ל':30,'כ':20,'י':10,'ט':9,'ח':8,'ז':7,'ו':6,'ה':5,'ד':4,'ג':3,'ב':2,'א':1};
@@ -59,7 +59,8 @@
         return val > 5000 ? val : 5000 + val;
     }
 
-    function getHebDate(d) {
+    function getNow() {
+        const d = new Date();
         const parts = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric', year:'numeric'}).formatToParts(d);
         const day = parseInt(parts.find(p => p.type === 'day').value);
         const month = parseInt(parts.find(p => p.type === 'month').value);
@@ -69,75 +70,76 @@
         return { day, month, year, yHeb, mName };
     }
 
-    function isStillInMourning(pDay, pMonth, pYearStr) {
-        const now = getHebDate(new Date());
-        const pYear = hebToNum(pYearStr);
-        const cleanM = pMonth.replace(/[^א-ת]/g, "").replace("מרחשון","חשון").replace("אדרא","אדר").replace("אדרב","אדר");
-        const pMonthIdx = MONTH_LIST.findIndex(m => cleanM.includes(m)) + 1;
+    function getMonthIdx(mStr) {
+        const clean = mStr.replace(/[^א-ת]/g, "").replace("מרחשון","חשון").replace("אדרא","אדר").replace("אדרב","אדר");
+        return HEB_MONTHS.findIndex(m => clean.includes(m)) + 1;
+    }
 
-        if (pYear === 0) return false;
-        if (now.year < pYear) return true; // שנה עתידית (לא אמור לקרות)
-        if (now.year === pYear) return true; // אותה שנה של הפטירה
-        
-        // עברה לפחות שנה אחת עברית (למשל תשפ"ו מול תשפ"ה)
-        if (now.year > pYear) {
-            if (now.month < pMonthIdx) return true; // עוד לא הגענו לחודש הפטירה השנה
-            if (now.month === pMonthIdx && now.day <= pDay) return true; // הגענו לחודש, אבל עוד לא ליום
+    function checkActiveMourning(pDay, pMonth, pYearStr) {
+        const now = getNow();
+        const pYearNum = getHebValue(pYearStr);
+        const pMonthNum = getMonthIdx(pMonth);
+
+        if (pYearNum === 0 || now.year < pYearNum) return true;
+        if (now.year === pYearNum) return true;
+        if (now.year > pYearNum) {
+            if (now.month < pMonthNum) return true;
+            if (now.month === pMonthNum && now.day <= pDay) return true;
         }
         return false;
     }
 
-    let allDisplayData = [];
-    let startIdx = 0;
+    let currentList = [];
+    let offset = 0;
 
-    async function fetchData() {
+    async function updateData() {
         try {
             const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&t=${Date.now()}`);
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
-            const now = getHebDate(new Date());
+            const now = getNow();
 
-            allDisplayData = json.table.rows.map(r => {
+            currentList = json.table.rows.map(r => {
                 const c = r.c;
                 const getT = (i) => (c[i] && c[i].v !== null) ? (c[i].f ? c[i].f : c[i].v.toString()).trim() : "";
                 return {
                     name: getT(0), prefix: getT(1), fName: getT(2), mName: getT(3),
                     day: parseInt(getT(4)), month: getT(5), year: getT(6), 
-                    donor: getT(7), isShanaMarked: getT(9).includes("שנה")
+                    donor: getT(7), isShana: getT(9).includes("שנה")
                 };
             }).filter(p => {
                 if (!p.name) return false;
-                const shanaActive = isStillInMourning(p.day, p.month, p.year);
-                
-                // תנאי 1: שנת אבל שטרם הסתיימה
-                if (p.isShanaMarked && shanaActive) return true;
-                
-                // תנאי 2: אזכרה ב-10 הימים הקרובים
+                const isStillInShana = p.isShana && checkActiveMourning(p.day, p.month, p.year);
+                if (isStillInShana) return true;
+
+                // בדיקת אזכרה ל-10 ימים קרובים
                 for(let i=0; i<=10; i++) {
                     let d = new Date(); d.setDate(d.getDate() + i);
-                    let h = getHebDate(d);
-                    const cleanPM = p.month.replace(/[^א-ת]/g, "").replace("אדרא","אדר").replace("אדרב","אדר");
-                    const pMIdx = MONTH_LIST.findIndex(m => cleanPM.includes(m)) + 1;
-                    if (p.day === h.day && pMIdx === h.month) return true;
+                    const fut = getNowByDate(d);
+                    if (p.day === fut.day && getMonthIdx(p.month) === fut.month) return true;
                 }
                 return false;
             });
 
-            allDisplayData.sort((a, b) => a.day - b.day);
-            startIdx = 0;
-            render();
-            document.getElementById('status').innerText = `V3.0 | היום: ${now.day}/${now.month}/${now.year} | שמות: ${allDisplayData.length}`;
+            currentList.sort((a, b) => a.day - b.day);
+            offset = 0;
+            draw();
         } catch (e) { console.error(e); }
     }
 
-    function render() {
+    function getNowByDate(d) {
+        const parts = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric'}).formatToParts(d);
+        return { day: parseInt(parts.find(p => p.type === 'day').value), month: parseInt(parts.find(p => p.type === 'month').value) };
+    }
+
+    function draw() {
         const container = document.getElementById('main-zone');
-        if (allDisplayData.length === 0) { container.innerHTML = "<h2>אין אזכרות קרובות</h2>"; return; }
+        if (currentList.length === 0) { container.innerHTML = "<h2>אין אזכרות קרובות</h2>"; return; }
         
-        const list = allDisplayData.slice(startIdx, startIdx + 6);
-        container.innerHTML = list.map(p => {
-            const shana = p.isShanaMarked && isStillInMourning(p.day, p.month, p.year);
-            const parent = (p.fName && p.mName) ? `${p.prefix} ${p.fName} ו${p.mName}` : `${p.prefix} ${p.fName || p.mName}`;
+        const page = currentList.slice(offset, offset + 6);
+        container.innerHTML = page.map(p => {
+            const inShana = p.isShana && checkActiveMourning(p.day, p.month, p.year);
+            const pLine = (p.fName && p.mName) ? `${p.prefix} ${p.fName} ו${p.mName}` : `${p.prefix} ${p.fName || p.mName}`;
             const toH = (n) => {
                 if (n === 15) return 'ט"ו'; if (n === 16) return 'ט"ז';
                 const u = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"], t = ["", "י", "כ", "ל"];
@@ -145,21 +147,21 @@
                 return h.length > 1 ? h.slice(0,-1) + '"' + h.slice(-1) : h + "'";
             };
             return `
-                <div class="card ${shana ? 'first-year-style' : ''}">
+                <div class="card ${inShana ? 'first-year-style' : ''}">
                     <div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div>
                     <div class="name">${p.name}</div>
-                    <div class="parents">${parent}</div>
+                    <div class="parents">${pLine}</div>
                     <div class="date">${toH(p.day)} ${p.month} ${p.year}</div>
-                    ${shana ? '<div class="year-label">שנת אבל</div>' : ''}
+                    ${inShana ? '<div class="year-label">שנת אבל</div>' : ''}
                     <div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div>
                 </div>
             `;
         }).join('');
-        if (allDisplayData.length > 6) startIdx = (startIdx + 6) % allDisplayData.length;
+        if (currentList.length > 6) offset = (offset + 6) % currentList.length;
     }
 
     function clock() {
-        const n = getHebDate(new Date());
+        const n = getNow();
         const toH = (num) => {
             if (num === 15) return 'ט"ו'; if (num === 16) return 'ט"ז';
             const u = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"], t = ["", "י", "כ", "ל"];
@@ -170,8 +172,8 @@
         document.getElementById('today-date').innerText = `${toH(n.day)} ${n.mName} ${n.yHeb}`;
     }
 
-    setInterval(clock, 1000); clock(); fetchData();
-    setInterval(render, 13000); setInterval(fetchData, 1800000);
+    setInterval(clock, 1000); clock(); updateData();
+    setInterval(draw, 13000); setInterval(updateData, 600000);
 </script>
 </body>
 </html>

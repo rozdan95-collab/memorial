@@ -33,18 +33,20 @@
     <h1>בית כנסת הראל - לוח הנצחה</h1>
     <div style="flex:1; text-align:left;"><div id="clock">00:00:00</div><div id="today-date">טוען...</div></div>
 </div>
-<div id="main-zone">סנכרון רשומות...</div>
-<div id="footer">תהא נשמתם צרורה בצרור החיים<div id="ver">V13.0 CLEAN</div></div>
+<div id="main-zone">סריקה סופית...</div>
+<div id="footer">תהא נשמתם צרורה בצרור החיים<div id="ver">V14.0 THE HAMMER</div></div>
 
 <script>
     const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
     const MONTHS = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
 
-    function hebYearToNum(s) {
+    // המרת שנה עברית למספר - תומך גם ב-"תשפ"ו" וגם ב-"5786"
+    function universalYearToNum(s) {
         if (!s) return 0;
+        let clean = s.toString().replace(/[^א-ת0-9]/g, "");
+        if (!isNaN(clean) && clean.length > 0) return parseInt(clean);
         const map = {'ת':400,'ש':300,'ר':200,'ק':100,'צ':90,'פ':80,'ע':70,'ס':60,'נ':50,'מ':40,'ל':30,'כ':20,'י':10,'ט':9,'ח':8,'ז':7,'ו':6,'ה':5,'ד':4,'ג':3,'ב':2,'א':1};
-        let clean = s.replace(/[^א-ת]/g, "");
-        if (clean.length > 3 && clean.startsWith('ה')) clean = clean.substring(1);
+        if (clean.startsWith('ה') && clean.length > 3) clean = clean.substring(1);
         let sum = 0; for (let char of clean) sum += (map[char] || 0);
         return sum + 5000;
     }
@@ -63,27 +65,24 @@
         return { 
             day: parseInt(p.find(x => x.type === 'day').value), 
             month: parseInt(p.find(x => x.type === 'month').value), 
-            year: hebYearToNum(yHeb), 
+            year: universalYearToNum(yHeb), 
             yHeb: yHeb, 
             mName: new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(d) 
         };
     }
 
-    // פונקציה פשוטה: האם שנת האבל עדיין בתוקף?
     function isMourningActive(pDay, pMonth, pYearStr) {
         const now = getNow();
-        const pYear = hebYearToNum(pYearStr);
+        const pYear = universalYearToNum(pYearStr);
         const pMonthIdx = getMonthIdx(pMonth);
 
         if (pYear === 0) return false;
-        // אם שנת הפטירה (5785) קטנה מהשנה הנוכחית (5786)
+        // לוגיקה פשוטה: אם השנה הנוכחית גדולה משנת הפטירה
         if (now.year > pYear) {
-            // אם החודש הנוכחי עבר את חודש הפטירה
             if (now.month > pMonthIdx) return false;
-            // אם אנחנו באותו חודש אבל עברנו את היום
             if (now.month === pMonthIdx && now.day > pDay) return false;
         }
-        return true; // אחרת - עדיין בשנת אבל
+        return true; 
     }
 
     let items = []; let startIdx = 0;
@@ -93,22 +92,15 @@
             const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&t=${Date.now()}`);
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
-            const now = getNow();
-
+            
             items = json.table.rows.map(r => {
                 const c = r.c;
                 const gt = (i) => (c[i] && c[i].v !== null) ? (c[i].f ? c[i].f : c[i].v.toString()).trim() : "";
-                return {
-                    name: gt(0), prefix: gt(1), fName: gt(2), mName: gt(3),
-                    day: parseInt(gt(4)), month: gt(5), year: gt(6), 
-                    donor: gt(7), shana: gt(9).includes("שנה")
-                };
+                return { name: gt(0), prefix: gt(1), fName: gt(2), mName: gt(3), day: parseInt(gt(4)), month: gt(5), year: gt(6), donor: gt(7), shana: gt(9).includes("שנה") };
             }).filter(p => {
                 if (!p.name) return false;
-                const mourning = p.shana && isMourningActive(p.day, p.month, p.year);
-                if (mourning) return true;
-
-                // בדיקת אזכרה (10 ימים קרובים)
+                const active = p.shana && isMourningActive(p.day, p.month, p.year);
+                if (active) return true;
                 for(let i=0; i<=10; i++) {
                     let d = new Date(); d.setDate(d.getDate() + i);
                     const fut = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric'}).formatToParts(d);
@@ -118,7 +110,6 @@
                 }
                 return false;
             });
-
             items.sort((a, b) => a.day - b.day);
             startIdx = 0; render();
         } catch (e) { console.error(e); }
@@ -159,7 +150,3 @@
 </script>
 </body>
 </html>
-
-
-
-

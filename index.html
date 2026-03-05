@@ -34,19 +34,25 @@
     <div style="flex:1; text-align:left;"><div id="clock">00:00:00</div><div id="today-date">טוען...</div></div>
 </div>
 <div id="main-zone">מעבד נתונים...</div>
-<div id="footer">תהא נשמתם צרורה בצרור החיים<div id="ver">V16.0 GOLDEN STABLE</div></div>
+<div id="footer">תהא נשמתם צרורה בצרור החיים<div id="ver">V17.0 THE ROCK</div></div>
 
 <script>
     const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
-    const MONTHS = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
+    const MONTH_MAP = {
+        "תשרי":1,"חשון":2,"מרחשון":2,"כסלו":3,"טבת":4,"שבט":5,
+        "אדר":6,"אדרא":6,"אדרב":6,"ניסן":7,"אייר":8,"סיון":9,
+        "סיוון":9,"תמוז":10,"אב":11,"אלול":12
+    };
 
-    function getHebValue(str) {
-        if (!str) return 0;
-        let s = str.toString().replace(/[^א-ת0-9]/g, "");
-        if (!isNaN(s) && s.length > 0) return parseInt(s);
+    function clean(s) { return s ? s.toString().replace(/[^א-ת0-9]/g, "").trim() : ""; }
+
+    function getHebYear(s) {
+        if (!s) return 0;
+        let c = clean(s);
+        if (!isNaN(c) && c.length > 0) return parseInt(c);
         const m = {'ת':400,'ש':300,'ר':200,'ק':100,'צ':90,'פ':80,'ע':70,'ס':60,'נ':50,'מ':40,'ל':30,'כ':20,'י':10,'ט':9,'ח':8,'ז':7,'ו':6,'ה':5,'ד':4,'ג':3,'ב':2,'א':1};
-        if (s.startsWith('ה') && s.length > 3) s = s.substring(1);
-        let sum = 0; for (let char of s) sum += (m[char] || 0);
+        if (c.startsWith('ה') && c.length > 3) c = c.substring(1);
+        let sum = 0; for (let char of c) sum += (m[char] || 0);
         return sum + 5000;
     }
 
@@ -57,23 +63,10 @@
         return { 
             d: parseInt(p.find(x => x.type === 'day').value), 
             m: parseInt(p.find(x => x.type === 'month').value), 
-            y: getHebValue(yHeb), 
+            y: getHebYear(yHeb), 
             yHeb: yHeb, 
             mName: new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(d) 
         };
-    }
-
-    // פונקציה חסינה: בודקת רק מספר יום וחודש
-    function isMourningActive(pDay, pMonth, pYearStr) {
-        const now = getNow();
-        const pYear = getHebValue(pYearStr);
-        const pMIdx = MONTHS.findIndex(m => pMonth.includes(m.substring(0,3))) + 1;
-        
-        if (now.y > pYear) {
-            if (now.m > pMIdx) return false;
-            if (now.m === pMIdx && now.d > pDay) return false;
-        }
-        return true;
     }
 
     let items = []; let startIdx = 0;
@@ -83,39 +76,51 @@
             const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&t=${Date.now()}`);
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
-            
+            const now = getNow();
+
             items = json.table.rows.map(r => {
                 const c = r.c;
                 const gt = (i) => (c[i] && c[i].v !== null) ? (c[i].f ? c[i].f : c[i].v.toString()).trim() : "";
                 return { name: gt(0), prefix: gt(1), fName: gt(2), mName: gt(3), day: parseInt(gt(4)), month: gt(5), year: gt(6), donor: gt(7), shana: gt(9).includes("שנה") };
             }).filter(p => {
                 if (!p.name) return false;
-                const active = p.shana && isMourningActive(p.day, p.month, p.year);
-                if (active) return true;
-
-                // בדיקת אזכרה (10 ימים)
-                for(let i=0; i<=10; i++) {
-                    let d = new Date(); d.setDate(d.getDate() + i);
-                    const futParts = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric'}).formatToParts(d);
-                    const fD = parseInt(futParts.find(x => x.type === 'day').value);
-                    const fM = parseInt(futParts.find(x => x.type === 'month').value);
-                    const pMIdx = MONTHS.findIndex(m => p.month.includes(m.substring(0,3))) + 1;
-                    if (p.day === fD && pMIdx === fM) return true;
+                const pM = MONTH_MAP[clean(p.month)] || 0;
+                const pY = getHebYear(p.year);
+                
+                // האם פג תוקף? (שנה שעברה והתאריך כבר עבר)
+                let expired = false;
+                if (pY > 0 && now.y > pY) {
+                    if (now.m > pM) expired = true;
+                    if (now.m === pM && now.d > p.day) expired = true;
                 }
+
+                // 1. שנת אבל פעילה
+                if (p.shana && !expired) return true;
+
+                // 2. אזכרה קרובה (12 ימים מהיום)
+                if (pM === now.m && p.day >= now.d && p.day <= now.d + 12) return true;
+                
                 return false;
             });
 
             items.sort((a, b) => a.day - b.day);
             startIdx = 0; render();
+            document.getElementById('ver').innerText = `V17.0 | נמצאו: ${items.length}`;
         } catch (e) { console.error(e); }
     }
 
     function render() {
         const zone = document.getElementById('main-zone');
-        if (items.length === 0) { zone.innerHTML = "<h2>אין אזכרות קרובות</h2>"; return; }
+        if (items.length === 0) { zone.innerHTML = "<h2>אין אזכרות קרובות (V17 Debug)</h2>"; return; }
         const page = items.slice(startIdx, startIdx + 6);
         zone.innerHTML = page.map(p => {
-            const sh = p.shana && isMourningActive(p.day, p.month, p.year);
+            const pM = MONTH_MAP[clean(p.month)] || 0;
+            const pY = getHebYear(p.year);
+            const now = getNow();
+            let activeSh = p.shana;
+            if (pY > 0 && now.y > pY) {
+                if (now.m > pM || (now.m === pM && now.d > p.day)) activeSh = false;
+            }
             const parent = (p.fName && p.mName) ? `${p.prefix} ${p.fName} ו${p.mName}` : `${p.prefix} ${p.fName || p.mName}`;
             const toH = (n) => {
                 if (n === 15) return 'ט"ו'; if (n === 16) return 'ט"ז';
@@ -123,7 +128,7 @@
                 let h = n >= 10 ? t[Math.floor(n/10)] + u[n%10] : u[n];
                 return h.length > 1 ? h.slice(0,-1) + '"' + h.slice(-1) : h + "'";
             };
-            return `<div class="card ${sh ? 'first-year-style' : ''}"><div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div><div class="name">${p.name}</div><div class="parents">${parent}</div><div class="date">${toH(p.day)} ${p.month} ${p.year}</div>${sh ? '<div class="year-label">שנת אבל</div>' : ''}<div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div></div>`;
+            return `<div class="card ${activeSh ? 'first-year-style' : ''}"><div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div><div class="name">${p.name}</div><div class="parents">${parent}</div><div class="date">${toH(p.day)} ${p.month} ${p.year}</div>${activeSh ? '<div class="year-label">שנת אבל</div>' : ''}<div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div></div>`;
         }).join('');
         if (items.length > 6) startIdx = (startIdx + 6) % items.length;
     }
@@ -145,4 +150,3 @@
 </script>
 </body>
 </html>
-

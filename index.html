@@ -37,18 +37,15 @@
 
 <script>
     const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
-    const MONTHS_LIST = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
 
-    async function loadData() {
+    async function update() {
         try {
             const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&t=${Date.now()}`);
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
             
-            // קבלת היום והחודש הנוכחי (במספרים) מהמחשב
-            const now = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric'}).formatToParts(new Date());
-            const dNow = parseInt(now.find(x => x.type === 'day').value);
-            const mNow = parseInt(now.find(x => x.type === 'month').value);
+            // קבלת היום הנוכחי בלבד (ט"ז = 16)
+            const dNow = parseInt(new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric'}).format(new Date()));
 
             let all = json.table.rows.map(r => {
                 const c = r.c;
@@ -56,26 +53,20 @@
                 return { name: gt(0), prefix: gt(1), fName: gt(2), mName: gt(3), day: parseInt(gt(4)), month: gt(5), year: gt(6), donor: gt(7), shana: gt(9).includes("שנה") };
             }).filter(p => {
                 if (!p.name) return false;
-                if (p.shana) return true; // תמיד להציג אם כתוב "שנה" בגיליון
+                if (p.shana) return true; // שמות של שנת אבל
                 
-                // בדיקת אזכרה: הופכים את החודש בגיליון למספר
-                const cleanM = p.month.replace(/[^א-ת]/g, "").replace("מרחשון","חשון").replace("סיוון","סיון");
-                let pMIdx = 0;
-                for(let i=0; i<MONTHS_LIST.length; i++) { 
-                    if(cleanM.includes(MONTHS_LIST[i])) pMIdx = i+1; 
-                }
-                
-                // אם אנחנו באותו חודש, מציגים את מי שהאזכרה שלו ב-15 הימים הקרובים
-                if (pMIdx === mNow && p.day >= dNow && p.day <= dNow + 15) return true;
+                // בדיקת אזכרה: אם כתוב "אדר" והיום הוא בין 16 ל-26
+                const isAdar = p.month.includes("אדר");
+                if (isAdar && p.day >= dNow && p.day <= dNow + 10) return true;
                 return false;
             });
 
             all.sort((a, b) => a.day - b.day);
-            render(all);
+            draw(all);
         } catch (e) { console.error(e); }
     }
 
-    function render(list) {
+    function draw(list) {
         const zone = document.getElementById('main-zone');
         if (list.length === 0) { zone.innerHTML = "<h2>אין אזכרות קרובות</h2>"; return; }
         
@@ -105,8 +96,9 @@
         document.getElementById('today-date').innerText = hebDate;
     }
 
-    setInterval(clock, 1000); clock(); loadData();
-    setInterval(loadData, 300000);
+    setInterval(clock, 1000); clock(); update();
+    setInterval(update, 300000);
 </script>
 </body>
 </html>
+

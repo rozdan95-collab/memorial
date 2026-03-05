@@ -13,7 +13,7 @@
         #today-date { font-size: 1.6vw; color: #f1d279; font-weight: bold; }
         #main-zone { height: 75vh; background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 3vw; padding: 2vh; box-sizing: border-box; }
         .card { background: #fefefe !important; border: 2px solid #d4af37 !important; border-radius: 12px; width: 28vw; height: 33vh; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 1.5vh; position: relative; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.6); }
-        .card.first-year-style { border: 6px double #d4af37 !important; }
+        .card.first-year-style { border: 6px double #d4af37 !important; background: #fff !important; }
         .name { font-size: 2.4vw; font-weight: bold; margin-top: 1.5vh; width: 92%; line-height: 1.1; background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .parents { font-size: 1.5vw; color: #333; margin-top: 0.5vh; font-weight: bold; }
         .date { font-size: 1.3vw; color: #8a6d3b; font-weight: bold; margin-top: 0.5vh; }
@@ -32,12 +32,21 @@
     <h1>בית כנסת הראל - לוח הנצחה</h1>
     <div style="flex:1; text-align:left;"><div id="clock">00:00:00</div><div id="today-date">טוען...</div></div>
 </div>
-<div id="main-zone">טוען...</div>
+<div id="main-zone">מעבד נתונים...</div>
 <div id="footer">תהא נשמתם צרורה בצרור החיים</div>
 
 <script>
     const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
-    const MONTHS = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
+    const HEB_MONTHS = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
+
+    function getMonthIdx(name) {
+        if (!name) return 0;
+        const clean = name.replace(/[^א-ת]/g, "").replace("מרחשון", "חשון").replace("סיוון", "סיון").replace("אדרא", "אדר").replace("אדרב", "אדר");
+        for (let i=0; i<HEB_MONTHS.length; i++) {
+            if (clean.includes(HEB_MONTHS[i])) return i + 1;
+        }
+        return 0;
+    }
 
     async function load() {
         try {
@@ -45,9 +54,9 @@
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
             
-            const nowParts = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric'}).formatToParts(new Date());
-            const dNow = parseInt(nowParts.find(x => x.type === 'day').value);
-            const mNow = parseInt(nowParts.find(x => x.type === 'month').value);
+            const now = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'numeric'}).formatToParts(new Date());
+            const dNow = parseInt(now.find(x => x.type === 'day').value);
+            const mNow = parseInt(now.find(x => x.type === 'month').value);
 
             let all = json.table.rows.map(r => {
                 const c = r.c;
@@ -55,12 +64,11 @@
                 return { name: gt(0), prefix: gt(1), fName: gt(2), mName: gt(3), day: parseInt(gt(4)), month: gt(5), year: gt(6), donor: gt(7), shana: gt(9).includes("שנה") };
             }).filter(p => {
                 if (!p.name) return false;
-                if (p.shana) return true; // מציג כל מי שכתוב לו "שנה"
+                if (p.shana) return true;
                 
-                // בדיקת אזכרה - רק לפי ה-2 אותיות הראשונות של החודש
-                const cleanM = p.month.replace(/[^א-ת]/g, "");
-                const pMIdx = MONTHS.findIndex(m => cleanM.startsWith(m.substring(0,2))) + 1;
-                if (pMIdx === mNow && p.day >= dNow && p.day <= dNow + 12) return true;
+                const pM = getMonthIdx(p.month);
+                // בדיקת אזכרה (14 ימים קדימה)
+                if (pM === mNow && p.day >= dNow && p.day <= dNow + 14) return true;
                 return false;
             });
 
@@ -70,8 +78,8 @@
     }
 
     function render(list) {
-        const z = document.getElementById('main-zone');
-        if (list.length === 0) { z.innerHTML = "<h2>אין נתונים להצגה</h2>"; return; }
+        const zone = document.getElementById('main-zone');
+        if (list.length === 0) { zone.innerHTML = "<h2>אין אזכרות קרובות</h2>"; return; }
         
         const toH = (n) => {
             if (n === 15) return 'ט"ו'; if (n === 16) return 'ט"ז';
@@ -80,7 +88,7 @@
             return h.length > 1 ? h.slice(0,-1) + '"' + h.slice(-1) : h + "'";
         };
 
-        z.innerHTML = list.slice(0, 6).map(p => `
+        zone.innerHTML = list.slice(0, 6).map(p => `
             <div class="card ${p.shana ? 'first-year-style' : ''}">
                 <div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div>
                 <div class="name">${p.name}</div>

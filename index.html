@@ -10,7 +10,7 @@
         #header { height: 18vh; background: linear-gradient(135deg, #041d29 0%, #000 50%, #041d29 100%); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 3px solid #d4af37; box-sizing: border-box; }
         #header h1 { margin: 0; font-size: 3.5vw; background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; }
         #clock { font-size: 2.8vw; color: #fff; font-weight: bold; font-family: monospace; }
-        #today-date { font-size: 1.6vw; color: #f1d279; font-weight: bold; }
+        #today-date { font-size: 1.8vw; color: #f1d279; font-weight: bold; }
         #main-zone { height: 75vh; background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 3vw; padding: 2vh; box-sizing: border-box; }
         .card { background: #fefefe !important; border: 2px solid #d4af37 !important; border-radius: 12px; width: 28vw; height: 33vh; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 1.5vh; position: relative; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.6); }
         .card.first-year-style { border: 6px double #d4af37 !important; background: #fff !important; }
@@ -32,52 +32,51 @@
     <h1>בית כנסת הראל - לוח הנצחה</h1>
     <div style="flex:1; text-align:left;"><div id="clock">00:00:00</div><div id="today-date">טוען...</div></div>
 </div>
-<div id="main-zone">מעבד נתונים...</div>
+<div id="main-zone">טוען...</div>
 <div id="footer">תהא נשמתם צרורה בצרור החיים</div>
 
 <script>
     const SHEET_ID = '1EHY_LctfSc7P-tSNexAlI_ie-KFTboIjM2YGHh8KoVU';
+    let allData = [];
+    let currentIdx = 0;
 
-    async function update() {
+    // פונקציית המרת מספר לאותיות עבריות
+    function toH(n) {
+        if (n === 15) return 'ט"ו'; if (n === 16) return 'ט"ז';
+        const units = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"], tens = ["", "י", "כ", "ל"];
+        let h = (tens[Math.floor(n / 10)] || "") + (units[n % 10] || "");
+        return h.length > 1 ? h.slice(0, -1) + '"' + h.slice(-1) : h + "'";
+    }
+
+    async function load() {
         try {
             const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&t=${Date.now()}`);
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
-            
-            // קבלת היום הנוכחי בלבד (16)
             const dNow = parseInt(new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric'}).format(new Date()));
 
-            let all = json.table.rows.map(r => {
+            allData = json.table.rows.map(r => {
                 const c = r.c;
                 const gt = (i) => (c[i] && c[i].v !== null) ? (c[i].f ? c[i].f : c[i].v.toString()).trim() : "";
                 return { name: gt(0), prefix: gt(1), fName: gt(2), mName: gt(3), day: parseInt(gt(4)), month: gt(5), year: gt(6), donor: gt(7), shana: gt(9).includes("שנה") };
             }).filter(p => {
                 if (!p.name) return false;
-                if (p.shana) return true; // שנת אבל - תמיד להציג
-                
-                // בדיקת אזכרה: אם חודש מכיל "אד" (אדר) והיום בין 16 ל-28
-                const isAdar = p.month.includes("אד");
-                if (isAdar && p.day >= dNow && p.day <= dNow + 12) return true;
-                return false;
+                if (p.shana) return true;
+                return p.month.includes("אד") && p.day >= dNow && p.day <= dNow + 14;
             });
 
-            all.sort((a, b) => a.day - b.day);
-            draw(all);
+            allData.sort((a, b) => a.day - b.day);
+            currentIdx = 0;
+            render();
         } catch (e) { console.error(e); }
     }
 
-    function draw(list) {
+    function render() {
         const zone = document.getElementById('main-zone');
-        if (list.length === 0) { zone.innerHTML = "<h2>אין אזכרות קרובות</h2>"; return; }
+        if (allData.length === 0) { zone.innerHTML = "<h2>אין אזכרות קרובות</h2>"; return; }
         
-        const toH = (n) => {
-            if (n === 15) return 'ט"ו'; if (n === 16) return 'ט"ז';
-            const u = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"], t = ["", "י", "כ", "ל"];
-            let h = n >= 10 ? t[Math.floor(n/10)] + u[n%10] : u[n];
-            return h.length > 1 ? h.slice(0,-1) + '"' + h.slice(-1) : h + "'";
-        };
-
-        zone.innerHTML = list.slice(0, 6).map(p => `
+        const page = allData.slice(currentIdx, currentIdx + 6);
+        zone.innerHTML = page.map(p => `
             <div class="card ${p.shana ? 'first-year-style' : ''}">
                 <div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div>
                 <div class="name">${p.name}</div>
@@ -87,17 +86,23 @@
                 <div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div>
             </div>
         `).join('');
+
+        if (allData.length > 6) {
+            currentIdx = (currentIdx + 6) % allData.length;
+        }
     }
 
-    function clock() {
+    function tick() {
         const d = new Date();
-        const hebDate = new Intl.DateTimeFormat('he-u-ca-hebrew', {day:'numeric', month:'long', year:'numeric'}).format(d);
+        const dNum = parseInt(new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric'}).format(d));
+        const mYear = new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long', year:'numeric'}).format(d);
         document.getElementById('clock').innerText = d.toLocaleTimeString('he-IL', {hour12:false});
-        document.getElementById('today-date').innerText = hebDate;
+        document.getElementById('today-date').innerText = `${toH(dNum)} ${mYear}`;
     }
 
-    setInterval(clock, 1000); clock(); update();
-    setInterval(update, 300000);
+    setInterval(tick, 1000); tick(); load();
+    setInterval(render, 13000); 
+    setInterval(load, 300000);
 </script>
 </body>
 </html>

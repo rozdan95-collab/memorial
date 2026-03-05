@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>לוח הנצחה - בית כנסת הראל</title>
     <style>
-        /* (כל הסטייל נשאר ללא שינוי מהגרסה הקודמת) */
         @font-face { font-family: 'Siddur'; src: local('Guttman Stam'), local('David'); }
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #000; font-family: 'Siddur', serif; }
         body { display: flex; flex-direction: column; color: #fff; }
@@ -56,38 +55,42 @@
         return h.length > 1 ? h.slice(0,-1) + '"' + h.slice(-1) : h + "'";
     }
 
+    // פונקציה חסינה לקבלת חלקי תאריך עברי
+    function getHebrewParts(date) {
+        const parts = new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric', month:'long', year:'numeric'}).formatToParts(date);
+        const day = parseInt(parts.find(p => p.type === 'day').value);
+        const month = parts.find(p => p.type === 'month').value;
+        const year = new Intl.DateTimeFormat('he-u-ca-hebrew', {year:'numeric'}).format(date); // שנה באותיות להשוואה מול הגיליון
+        return { day, month, year };
+    }
+
+    function getMonthIdx(m) {
+        const list = ["תשרי", "חשון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיון", "תמוז", "אב", "אלול"];
+        const clean = (s) => s.replace(/[ '"]/g, "").replace("מרחשון", "חשון");
+        const name = clean(m);
+        return list.findIndex(item => name.includes(item));
+    }
+
+    function isShanaActive(pDay, pMonth, pYear) {
+        const now = getHebrewParts(new Date());
+        if (pYear === now.year) return true;
+        
+        const pIdx = getMonthIdx(pMonth);
+        const cIdx = getMonthIdx(now.month);
+
+        if (cIdx < pIdx) return true;
+        if (cIdx === pIdx && now.day < pDay) return true;
+        return false;
+    }
+
     function getUpcomingDates() {
         let dates = [];
         for (let i = 0; i <= 10; i++) {
             let d = new Date();
             d.setDate(d.getDate() + i);
-            let day = parseInt(new Intl.DateTimeFormat('he-u-ca-hebrew', {day:'numeric'}).format(d));
-            let month = new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(d);
-            dates.push({ day, month });
+            dates.push(getHebrewParts(d));
         }
         return dates;
-    }
-
-    // פונקציה חדשה לבדיקה האם שנת האבל עדיין פעילה
-    function isShanaActive(pDay, pMonth, pYear) {
-        const d = new Date();
-        const curDay = parseInt(new Intl.DateTimeFormat('he-u-ca-hebrew', {day:'numeric'}).format(d));
-        const curMonth = new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(d);
-        const curYear = new Intl.DateTimeFormat('he-u-ca-hebrew', {year:'numeric'}).format(d);
-
-        // אם זו אותה שנה עברית שבה נפטר - השנה בטוח פעילה
-        if (pYear === curYear) return true;
-
-        // אם עברה שנה, בודקים אם היום/חודש של האזכרה כבר חלפו
-        // רשימת חודשים לצורך השוואת סדר (פשטני אך יעיל לשנה הנוכחית)
-        const months = ["תשרי", "חשוון", "כסלו", "טבת", "שבט", "אדר", "ניסן", "אייר", "סיוון", "תמוז", "אב", "אלול"];
-        const pMonthIdx = months.indexOf(pMonth.replace("'", ""));
-        const curMonthIdx = months.indexOf(curMonth.replace("'", ""));
-
-        if (curMonthIdx < pMonthIdx) return true; // החודש של האזכרה עוד לא הגיע השנה
-        if (curMonthIdx === pMonthIdx && curDay < pDay) return true; // אנחנו באותו חודש, אבל היום עוד לא הגיע
-
-        return false; // השנה הסתיימה
     }
 
     async function loadData() {
@@ -95,33 +98,25 @@
             const res = await fetch(url);
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
-            const rows = json.table.rows;
             const upcoming = getUpcomingDates();
             
-            allDeceased = rows.map(r => {
+            allDeceased = json.table.rows.map(r => {
                 const c = r.c;
                 const getT = (idx) => (c[idx] && c[idx].v !== null) ? (c[idx].f ? c[idx].f : c[idx].v.toString()).trim() : "";
                 let fName = getT(2), mName = getT(3), prefix = getT(1);
-                
                 let parentLine = (fName && mName) ? `${prefix} ${fName} ו${mName}` : `${prefix} ${fName || mName}`;
 
                 return {
                     name: getT(0), parents: parentLine,
                     dayVal: parseInt(getT(4)), month: getT(5), year: getT(6), 
                     donor: getT(7),
-                    isFirstYearMarked: (c[9] && getT(9).includes("שנה"))
+                    isShanaMarked: (c[9] && getT(9).includes("שנה"))
                 };
             }).filter(p => {
-                if (p.name === "") return false;
-                
-                const isUpcoming = upcoming.some(u => u.day === p.dayVal && u.month === p.month);
-                
-                // לוגיקה מתוקנת: מוצג אם זו אזכרה קרובה OR אם הוא בשנת אבל שטרם הסתיימה
-                if (p.isFirstYearMarked) {
-                    if (isShanaActive(p.dayVal, p.month, p.year)) return true;
-                }
-                
-                return isUpcoming;
+                if (!p.name) return false;
+                const active = isShanaActive(p.dayVal, p.month, p.year);
+                if (p.isShanaMarked && active) return true;
+                return upcoming.some(u => u.day === p.dayVal && getMonthIdx(u.month) === getMonthIdx(p.month));
             });
 
             allDeceased.sort((a, b) => a.dayVal - b.dayVal);
@@ -137,27 +132,27 @@
             return;
         }
         const batch = allDeceased.slice(currentIndex, currentIndex + 6);
-        container.innerHTML = batch.map(p => `
-            <div class="card ${isShanaActive(p.dayVal, p.month, p.year) && p.isFirstYearMarked ? 'first-year-style' : ''}">
-                <div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div>
-                <div class="name">${p.name}</div>
-                <div class="parents">${p.parents}</div>
-                <div class="date">${numberToHebrew(p.dayVal)} ב${p.month} ${p.year}</div>
-                ${isShanaActive(p.dayVal, p.month, p.year) && p.isFirstYearMarked ? '<div class="year-label">שנת אבל</div>' : ''}
-                <div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div>
-            </div>
-        `).join('');
+        container.innerHTML = batch.map(p => {
+            const shana = p.isShanaMarked && isShanaActive(p.dayVal, p.month, p.year);
+            return `
+                <div class="card ${shana ? 'first-year-style' : ''}">
+                    <div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div>
+                    <div class="name">${p.name}</div>
+                    <div class="parents">${p.parents}</div>
+                    <div class="date">${numberToHebrew(p.dayVal)} ב${p.month} ${p.year}</div>
+                    ${shana ? '<div class="year-label">שנת אבל</div>' : ''}
+                    <div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div>
+                </div>
+            `;
+        }).join('');
         currentIndex += 6;
         if (currentIndex >= allDeceased.length) currentIndex = 0;
     }
 
     function updateHeader() {
-        const d = new Date();
-        document.getElementById('clock').innerText = d.toLocaleTimeString('he-IL', {hour12:false});
-        const dayNum = parseInt(new Intl.DateTimeFormat('he-u-ca-hebrew', {day:'numeric'}).format(d));
-        const monthName = new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(d);
-        const yearName = new Intl.DateTimeFormat('he-u-ca-hebrew', {year:'numeric'}).format(d);
-        document.getElementById('today-date').innerText = `${numberToHebrew(dayNum)} ${monthName} ${yearName}`;
+        const now = getHebrewParts(new Date());
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString('he-IL', {hour12:false});
+        document.getElementById('today-date').innerText = `${numberToHebrew(now.day)} ${now.month} ${now.year}`;
     }
 
     setInterval(updateHeader, 1000); updateHeader(); loadData();

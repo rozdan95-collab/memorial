@@ -40,7 +40,6 @@
     let allData = [];
     let currentIdx = 0;
 
-    // פונקציית המרת מספר לאותיות עבריות
     function toH(n) {
         if (n === 15) return 'ט"ו'; if (n === 16) return 'ט"ז';
         const units = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"], tens = ["", "י", "כ", "ל"];
@@ -80,7 +79,7 @@
             <div class="card ${p.shana ? 'first-year-style' : ''}">
                 <div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div>
                 <div class="name">${p.name}</div>
-                <div class="parents">${p.prefix} ${p.fName} ${p.mName ? 'ו'+p.mName : ''}</div>
+                <div class="parents">${p.prefix} ${[p.fName, p.mName].filter(n => n).join(' ו')}</div>
                 <div class="date">${toH(p.day)} ${p.month} ${p.year}</div>
                 ${p.shana ? '<div class="year-label">שנת אבל</div>' : ''}
                 <div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div>
@@ -106,5 +105,3 @@
 </script>
 </body>
 </html>
-
-

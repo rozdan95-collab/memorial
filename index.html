@@ -7,19 +7,49 @@
         @font-face { font-family: 'Siddur'; src: local('Guttman Stam'), local('David'); }
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #000; font-family: 'Siddur', serif; }
         body { display: flex; flex-direction: column; color: #fff; }
+        
+        /* כותרת עליונה */
         #header { height: 18vh; background: linear-gradient(135deg, #041d29 0%, #000 50%, #041d29 100%); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 3px solid #d4af37; box-sizing: border-box; }
         #header h1 { margin: 0; font-size: 3.5vw; background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; }
         #clock { font-size: 2.8vw; color: #fff; font-weight: bold; font-family: monospace; }
         #today-date { font-size: 1.8vw; color: #f1d279; font-weight: bold; }
-        #main-zone { height: 75vh; background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 3vw; padding: 2vh; box-sizing: border-box; }
-        .card { background: #fefefe !important; border: 2px solid #d4af37 !important; border-radius: 12px; width: 28vw; height: 33vh; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 1.5vh; position: relative; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.6); }
+
+        /* אזור התצוגה המרכזי */
+        #main-zone { 
+            height: 75vh; 
+            background: radial-gradient(circle at center, #0b3d54 0%, #000 85%); 
+            display: flex; flex-wrap: wrap; justify-content: center; align-content: center; 
+            gap: 2.5vw; padding: 2vh; box-sizing: border-box;
+            transition: opacity 0.8s ease-in-out; /* אנימציית מעבר חלקה */
+        }
+
+        /* כרטיס הנצחה */
+        .card { 
+            background: #fefefe !important; border: 2px solid #d4af37 !important; border-radius: 12px; 
+            width: 29vw; height: 34vh; display: flex; flex-direction: column; align-items: center; 
+            text-align: center; padding: 1.5vh; position: relative; box-sizing: border-box; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+        }
+
         .card.first-year-style { border: 6px double #d4af37 !important; background: #fff !important; }
-        .name { font-size: 2.4vw; font-weight: bold; margin-top: 1.5vh; width: 92%; line-height: 1.1; background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .name { 
+            font-size: 2.3vw; font-weight: bold; margin-top: 1.5vh; width: 95%; line-height: 1.1; 
+            background: linear-gradient(to bottom, #f1d279 0%, #d4af37 50%, #a67c00 100%); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+
+        .rus-name { font-size: 1.3vw; color: #555; font-family: sans-serif; margin-top: 2px; font-weight: normal; }
         .parents { font-size: 1.5vw; color: #333; margin-top: 0.5vh; font-weight: bold; }
         .date { font-size: 1.3vw; color: #8a6d3b; font-weight: bold; margin-top: 0.5vh; }
         .donor { margin-top: auto; margin-bottom: 0.5vh; font-size: 1vw; color: #a67c00; border-top: 1px solid rgba(0,0,0,0.1); width: 90%; padding-top: 0.5vh; }
         .year-label { background: #d4af37; color: #000; font-weight: bold; font-size: 0.9vw; padding: 2px 10px; border-radius: 4px; margin-top: 5px; }
+
+        /* פוטר */
         #footer { height: 7vh; background: #052a3b; color: #f1d279; display: flex; align-items: center; justify-content: center; border-top: 3px solid #d4af37; font-size: 3.5vh; font-weight: bold; position: relative; }
+        
+        /* נר זכרון */
         .candle-box { position: absolute; top: 10px; left: 10px; width: 25px; height: 40px; }
         .flame-real { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); width: 10px; height: 20px; background: radial-gradient(ellipse at bottom, #fff 0%, #fffb00 30%, #ff6600 70%, rgba(255,102,0,0) 100%); border-radius: 50% 50% 35% 35%; animation: flicker 0.1s infinite alternate; }
         .wax-real { position: absolute; bottom: 0; left: 50%; width: 14px; height: 16px; background: linear-gradient(to right, #a67c00, #f1d279, #a67c00); transform: translateX(-50%); border-radius: 2px; }
@@ -52,16 +82,32 @@
             const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&t=${Date.now()}`);
             const text = await res.text();
             const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
-            const dNow = parseInt(new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric'}).format(new Date()));
+            
+            const now = new Date();
+            const dNow = parseInt(new Intl.DateTimeFormat('he-u-ca-hebrew-nu-latn', {day:'numeric'}).format(now));
+            const mNow = new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(now).trim();
+
+            // חישוב החודש הבא (לטיפול במעבר שנה/חודש)
+            const futureDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+            const mNext = new Intl.DateTimeFormat('he-u-ca-hebrew', {month:'long'}).format(futureDate).trim();
 
             allData = json.table.rows.map(r => {
                 const c = r.c;
                 const gt = (i) => (c[i] && c[i].v !== null) ? (c[i].f ? c[i].f : c[i].v.toString()).trim() : "";
-                return { name: gt(0), prefix: gt(1), fName: gt(2), mName: gt(3), day: parseInt(gt(4)), month: gt(5), year: gt(6), donor: gt(7), shana: gt(9).includes("שנה") };
+                return { 
+                    name: gt(0), prefix: gt(1), fName: gt(2), mName: gt(3), 
+                    day: parseInt(gt(4)), month: gt(5), year: gt(6), 
+                    donor: gt(7), rName: gt(8), 
+                    shana: gt(9).includes("שנה") 
+                };
             }).filter(p => {
                 if (!p.name) return false;
                 if (p.shana) return true;
-                return p.month.includes("אד") && p.day >= dNow && p.day <= dNow + 14;
+                
+                // סינון חכם לשבועיים הקרובים
+                if (p.month === mNow) return p.day >= dNow && p.day <= dNow + 14;
+                if (p.month === mNext) return p.day <= (dNow + 14) % 30; 
+                return false;
             });
 
             allData.sort((a, b) => a.day - b.day);
@@ -74,21 +120,28 @@
         const zone = document.getElementById('main-zone');
         if (allData.length === 0) { zone.innerHTML = "<h2>אין אזכרות קרובות</h2>"; return; }
         
-        const page = allData.slice(currentIdx, currentIdx + 6);
-        zone.innerHTML = page.map(p => `
-            <div class="card ${p.shana ? 'first-year-style' : ''}">
-                <div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div>
-                <div class="name">${p.name}</div>
-                <div class="parents">${p.prefix} ${[p.fName, p.mName].filter(n => n).join(' ו')}</div>
-                <div class="date">${toH(p.day)} ${p.month} ${p.year}</div>
-                ${p.shana ? '<div class="year-label">שנת אבל</div>' : ''}
-                <div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div>
-            </div>
-        `).join('');
-
-        if (allData.length > 6) {
-            currentIdx = (currentIdx + 6) % allData.length;
-        }
+        zone.style.opacity = 0; // התחלת העמעום
+        
+        setTimeout(() => {
+            const page = allData.slice(currentIdx, currentIdx + 6);
+            zone.innerHTML = page.map(p => `
+                <div class="card ${p.shana ? 'first-year-style' : ''}">
+                    <div class="candle-box"><div class="flame-real"></div><div class="wax-real"></div></div>
+                    <div class="name">${p.name}</div>
+                    ${p.rName ? `<div class="rus-name">${p.rName}</div>` : ''}
+                    <div class="parents">${p.prefix} ${[p.fName, p.mName].filter(n => n).join(' ו')}</div>
+                    <div class="date">${toH(p.day)} ${p.month} ${p.year}</div>
+                    ${p.shana ? '<div class="year-label">שנת אבל</div>' : ''}
+                    <div class="donor">${p.donor ? `הונצח ע"י: ${p.donor}` : ''}</div>
+                </div>
+            `).join('');
+            
+            zone.style.opacity = 1; // החזרת התצוגה
+            
+            if (allData.length > 6) {
+                currentIdx = (currentIdx + 6) % allData.length;
+            }
+        }, 800);
     }
 
     function tick() {
